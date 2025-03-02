@@ -1,7 +1,10 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const { pathToRegexp, match } = require('path-to-regexp'); // Thêm match từ path-to-regexp
-const pool = require('../config/db');
+const { match } = require('path-to-regexp'); // Đảm bảo rằng path-to-regexp đã được cài đặt
+
+const Role = require('../models/Role');
+const Permissions = require('../models/Permission');
+const RolePermissions = require('../models/RolePermission');
 
 const versionRoute = '/v1';
 const whiteListPaths = ['/', '/register', '/login', '/logout', '/refresh'];
@@ -21,6 +24,31 @@ const getTokenFromHeader = authorizationHeader => {
     const token = authorizationHeader.split(' ')[1];
     return token || null;
 };
+
+async function getPermissionsByRoleId(idRole) {
+    try {
+        // Tìm Role theo idRole và lấy các Permissions liên quan
+        const role = await Role.findByPk(idRole, {
+            include: [
+                {
+                    model: Permissions, // Model Permissions
+                    through: { attributes: [] }, // Không lấy các cột từ bảng trung gian RolePermissions
+                    attributes: ['route', 'method'] // Chỉ lấy các trường route và method
+                }
+            ]
+        });
+
+        if (!role) {
+            throw new Error('Role not found');
+        }
+
+        // Trả về danh sách permissions
+        return role.Permissions; // Sequelize tự động thêm thuộc tính Permissions từ mối quan hệ belongsToMany
+    } catch (error) {
+        console.error('Error fetching permissions:', error);
+        throw error;
+    }
+}
 
 /**
  * Middleware xác thực token và lấy quyền từ idRole
@@ -42,7 +70,6 @@ const middleware = {
         }
 
         try {
-            // Xác thực token
             jwt.verify(
                 token,
                 process.env.JWT_ACCESS_SECRET,
@@ -53,53 +80,41 @@ const middleware = {
                             .json({ message: 'Token is invalid' });
                     }
 
-                    // Lưu thông tin user vào req
                     req.user = user;
-
-                    // Lấy idRole từ token
                     const idRole = user.idRole;
 
-                    // Truy vấn database để lấy danh sách quyền dựa trên idRole
-                    const [permissions] = await pool.query(
-                        `SELECT p.route, p.method 
-                         FROM permissions p
-                         JOIN role_permissions rp ON p.id = rp.idPermission
-                         WHERE rp.idRole = ?`,
-                        [idRole]
-                    );
+                    // Lấy các quyền của Role dựa trên idRole
+                    const permissions = await getPermissionsByRoleId(idRole);
 
-                    console.log(`Danh sach quyen cua ${idRole} :`);
+                    console.log(`Danh sách quyền của ${idRole} :`);
                     permissions.forEach(perm => {
                         console.log(perm.route, perm.method);
                     });
 
-                    // Lưu danh sách quyền vào req để middleware sau dùng
                     req.permissions = permissions;
 
-                    // Kiểm tra quyền truy cập
-                    const requestedRoute = req.originalUrl; // Ví dụ: '/v1/user/35'
-                    const requestedMethod = req.method; // Ví dụ: 'DELETE'
+                    // Tách phần path khỏi query string
+                    const requestedRoute = req.originalUrl.split('?')[0]; // Ví dụ: '/v1/user/123/orders/456'
+                    const requestedMethod = req.method; // Ví dụ: 'GET'
 
                     let hasPermission = false;
 
+                    // Dùng path-to-regexp để kiểm tra quyền truy cập
                     for (const perm of permissions) {
-                        // Chuyển route từ DB thành pattern và so sánh với requestedRoute
-                        const routePattern = versionRoute + perm.route; // Ví dụ: '/v1/user/:id'
-
-                        // Tạo hàm matcher từ pattern
+                        const routePattern = versionRoute + perm.route; // Ví dụ: '/v1/user/:userId/orders/:orderId'
                         const matcher = match(routePattern, {
                             decode: decodeURIComponent
                         });
-
-                        // Kiểm tra khớp route
-                        const routeMatch = matcher(requestedRoute);
-
+                        const routeMatch = matcher(requestedRoute); // Kiểm tra đường dẫn có khớp không
                         const methodMatch =
-                            perm.method.toUpperCase() === requestedMethod;
+                            perm.method.toUpperCase() === requestedMethod; // Kiểm tra phương thức HTTP có khớp không
 
                         console.log('Route DB pattern:', routePattern);
-                        console.log('Route request:', requestedRoute);
-                        console.log('Route match:', !!routeMatch); // routeMatch là object nếu khớp, false nếu không
+                        console.log(
+                            'Route request (without query):',
+                            requestedRoute
+                        );
+                        console.log('Route match:', !!routeMatch);
                         console.log('Method DB:', perm.method);
                         console.log('Method request:', requestedMethod);
                         console.log('Method match:', methodMatch);
@@ -128,10 +143,6 @@ const middleware = {
         }
     },
 
-    /**
-     * Middleware kiểm tra quyền admin hoặc chính mình
-     * Thay vì kiểm tra role name, ta kiểm tra idRole
-     */
     verifyTokenAdminAndYourself: async (req, res, next) => {
         console.log('id request ', req.user);
         console.log('id param ', req.params);
@@ -140,10 +151,8 @@ const middleware = {
         const userId = req.user.id;
         const requestedId = req.params.id;
 
-        // Giả sử idRole của admin là 2 (cần thay bằng giá trị thực tế từ DB của bạn)
         const ADMIN_ROLE_ID = 2;
 
-        // Kiểm tra nếu user là chính mình hoặc có idRole của admin
         if (userId === requestedId || idRole === ADMIN_ROLE_ID) {
             return next();
         }

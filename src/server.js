@@ -3,10 +3,14 @@ const express = require('express'); //commonjs
 const cookieParser = require('cookie-parser');
 
 const cors = require('cors');
+
 const middleware = require('./middleware/auth');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
+
+const sysDb = require('./config/sysDb');
+
 const app = express();
 const port = process.env.PORT || 8888;
 
@@ -27,6 +31,9 @@ app.use('/v1/user', userRoutes);
 
 (async () => {
     try {
+        // Đồng bộ hóa cơ sở dữ liệu trước khi khởi chạy ứng dụng
+        await sysDb();
+
         app.listen(port, () => {
             console.log(`Backend Nodejs App listening on port ${port}`);
         });

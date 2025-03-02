@@ -1,27 +1,42 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db'); // Kết nối sequelize
+const User = require('./User'); // Model User
 
-const tokenSchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
-        required: true
+const Token = sequelize.define(
+    'Token',
+    {
+        userId: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: User, // Tham chiếu đến model User
+                key: 'id' // Giả sử key trong model User là 'id'
+            },
+            allowNull: false
+        },
+        refreshToken: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        expiresAt: {
+            type: DataTypes.DATE,
+            allowNull: false
+        },
+        isValid: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW
+        }
     },
-    refreshToken: {
-        type: String,
-        required: true
-    },
-    expiresAt: {
-        type: Date,
-        required: true
-    },
-    isValid: {
-        type: Boolean,
-        default: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
+    {
+        tableName: 'tokens', // Tên bảng trong DB
+        timestamps: false // Nếu không cần tự động quản lý createdAt, updatedAt
     }
-});
+);
 
-module.exports = mongoose.model('Token', tokenSchema);
+// Quan hệ Token -> User (N-1: Một Token thuộc về một User)
+Token.belongsTo(User, { foreignKey: 'userId' });
+
+module.exports = Token;
