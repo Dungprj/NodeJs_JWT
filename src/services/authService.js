@@ -1,323 +1,141 @@
-const User = require('../models/user');
-const Token = require('../models/Token');
-
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+require('dotenv').config();
+const { match } = require('path-to-regexp');
 const pool = require('../config/db');
 
-const ms = require('ms');
-const durationInMs = ms(process.env.JWT_REFRESH_EXPIRE);
+const versionRoute = '/v1';
+const whiteListPaths = ['/', '/register', '/login', '/logout', '/refresh'];
 
-require('dotenv').config();
-
-// Hàm tính thời gian hết hạn (expiresAt) dựa trên giá trị từ .env
-const getExpiresAtFromDuration = duration => {
-    const now = new Date();
-    const durationInMs = parseDurationToMilliseconds(duration);
-    return new Date(now.getTime() + durationInMs);
+/**
+ * Kiểm tra xem đường dẫn có trong whitelist không.
+ */
+const isWhitelisted = url => {
+    return whiteListPaths.some(path => `/v1/auth${path}` === url);
 };
 
-// Hàm chuyển đổi định dạng thời gian từ chuỗi sang milliseconds
-const parseDurationToMilliseconds = duration => {
-    const units = {
-        s: 1000, // seconds
-        m: 1000 * 60, // minutes
-        h: 1000 * 60 * 60, // hours
-        d: 1000 * 60 * 60 * 24, // days
-        y: 1000 * 60 * 60 * 24 * 365 // years
-    };
-
-    const match = duration.match(/^(\d+)([smhdy])$/);
-    if (!match) {
-        throw new Error(`Invalid duration format: ${duration}`);
-    }
-
-    const value = parseInt(match[1], 10);
-    const unit = match[2];
-    return value * units[unit];
+/**
+ * Xử lý xác thực token từ header.
+ */
+const getTokenFromHeader = authorizationHeader => {
+    if (!authorizationHeader) return null;
+    const token = authorizationHeader.split(' ')[1];
+    return token || null;
 };
 
-const authService = {
-    createUserService2: async (name, email, password) => {
-        try {
-            //kiem tra user co ton tai hay chua
-            const queryCheckExits = `SELECT * FROM User WHERE email = ?`;
-            const [users] = await pool.execute(queryCheckExits, [email]);
-            //neu user khong ton tai
-            if (users.length > 0) {
-                throw new Error('Email is exists');
-            }
-            //create salt
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(password, salt);
-            const query = `INSERT INTO User (name, email, password) VALUES (?, ?, ?)`;
-            const [respone] = await pool.execute(query, [
-                name,
-                email,
-                hashedPassword
-            ]);
-            return respone.affectedRows > 0;
-        } catch (err) {
-            console.log(err);
-            throw new Error(err.message || 'Error creating user');
+/**
+ * Middleware xác thực token và lấy quyền từ idRole
+ */
+const middleware = {
+    auth: async (req, res, next) => {
+        // Kiểm tra whitelist
+        if (isWhitelisted(req.originalUrl)) {
+            console.log('Accessing white list path:', req.originalUrl);
+            return next();
         }
-    },
 
-    // Tạo user mới
-    createUserService: async (name, email, password) => {
+        console.log('Checking token for request:', req.originalUrl);
+
+        const token = getTokenFromHeader(req.headers.authorization);
+
+        if (!token) {
+            return res.status(401).json({ message: 'Token is missing' });
+        }
+
         try {
-            const existingUser = await User.findOne({ email });
-            if (existingUser) {
-                throw new Error('Email already exists');
-            }
+            jwt.verify(
+                token,
+                process.env.JWT_ACCESS_SECRET,
+                async (err, user) => {
+                    if (err) {
+                        return res
+                            .status(403)
+                            .json({ message: 'Token is invalid' });
+                    }
 
-            const hashedPassword = await bcrypt.hash(password, salt);
-            const newUser = new User({ name, email, password: hashedPassword });
-            await newUser.save();
+                    req.user = user;
+                    const idRole = user.idRole;
 
-            return {
-                message: 'User created successfully',
-                user: { id: newUser._id, email: newUser.email }
-            };
+                    const [permissions] = await pool.query(
+                        `SELECT p.route, p.method 
+                         FROM permissions p
+                         JOIN role_permissions rp ON p.id = rp.idPermission
+                         WHERE rp.idRole = ?`,
+                        [idRole]
+                    );
+
+                    console.log(`Danh sach quyen cua ${idRole} :`);
+                    permissions.forEach(perm => {
+                        console.log(perm.route, perm.method);
+                    });
+
+                    req.permissions = permissions;
+
+                    // Tách phần path khỏi query string
+                    //trong trường hợp có phân trang
+                    const requestedRoute = req.originalUrl.split('?')[0]; // Ví dụ: '/v1/user/123/orders/456'
+                    const requestedMethod = req.method; // Ví dụ: 'GET'
+
+                    let hasPermission = false;
+
+                    for (const perm of permissions) {
+                        const routePattern = versionRoute + perm.route; // Ví dụ: '/v1/user/:userId/orders/:orderId'
+                        const matcher = match(routePattern, {
+                            decode: decodeURIComponent
+                        });
+                        const routeMatch = matcher(requestedRoute);
+                        const methodMatch =
+                            perm.method.toUpperCase() === requestedMethod;
+
+                        console.log('Route DB pattern:', routePattern);
+                        console.log(
+                            'Route request (without query):',
+                            requestedRoute
+                        );
+                        console.log('Route match:', !!routeMatch);
+                        console.log('Method DB:', perm.method);
+                        console.log('Method request:', requestedMethod);
+                        console.log('Method match:', methodMatch);
+
+                        if (routeMatch && methodMatch) {
+                            hasPermission = true;
+                            break;
+                        }
+                    }
+
+                    console.log('Has permission:', hasPermission);
+
+                    if (!hasPermission) {
+                        return res.status(403).json({
+                            message: 'Forbidden: You do not have permission'
+                        });
+                    }
+
+                    next();
+                }
+            );
         } catch (error) {
-            throw new Error(error.message || 'Error creating user');
-        }
-    },
-    handleLoginService2: async (email, password) => {
-        try {
-            //kiem tra user co ton tai hay chua
-            const queryCheckExits = `SELECT * FROM User WHERE email = ?`;
-            const [user] = await pool.query(queryCheckExits, [email]);
-
-            //neu user khong ton tai
-            if (user.length < 0) {
-                throw new Error(
-                    'Invalid email or password khong ton tai email'
-                );
-            }
-
-            const isMatch = await bcrypt.compare(password, user[0].password);
-            if (!isMatch) {
-                throw new Error('Invalid email or password');
-            }
-
-            const accessToken = authService.generateAccessToken(user[0]);
-            const refreshToken = authService.generateRefreshToken(user[0]);
-
-            const expiresAt = getExpiresAtFromDuration(
-                process.env.JWT_REFRESH_EXPIRE
-            );
-
-            const queryInsertToken = `INSERT INTO Token (userId, refreshToken, expireAt,isValid) VALUES (?, ?, ?,?)`;
-            const [response] = await pool.execute(queryInsertToken, [
-                user[0].id,
-                refreshToken,
-                expiresAt,
-                true
-            ]);
-
-            if (response.affectedRows < 0) {
-                throw new Error('Error insert token');
-            }
-
-            return {
-                message: 'Login successful',
-                accessToken,
-                refreshToken,
-                user: { id: user[0].id, email: user[0].email }
-            };
-        } catch (error) {
-            throw new Error(error.message || 'Error logging in');
-        }
-    },
-    handleLoginService: async (email, password) => {
-        try {
-            const user = await User.findOne({ email });
-            if (!user) {
-                throw new Error('sai pass');
-            }
-
-            const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) {
-                throw new Error('Invalid email or password');
-            }
-
-            const accessToken = authService.generateAccessToken(user);
-            const refreshToken = authService.generateRefreshToken(user);
-
-            const expiresAt = getExpiresAtFromDuration(
-                process.env.JWT_REFRESH_EXPIRE
-            );
-
-            await Token.create({
-                userId: user._id,
-                refreshToken,
-                expiresAt
-            });
-
-            return {
-                message: 'Login successful',
-                accessToken,
-                refreshToken,
-                user: { id: user._id, email: user.email }
-            };
-        } catch (error) {
-            throw new Error(error.message || 'Error logging in');
-        }
-    },
-    // Tạo access token
-    generateAccessToken: user => {
-        if (!process.env.JWT_ACCESS_SECRET) {
-            throw new Error('JWT_ACCESS_SECRET is not defined');
-        }
-        if (!process.env.JWT_ACCESS_EXPIRE) {
-            throw new Error('JWT_ACCESS_EXPIRE is not defined');
-        }
-        return jwt.sign({ id: user.id }, process.env.JWT_ACCESS_SECRET, {
-            expiresIn: process.env.JWT_ACCESS_EXPIRE
-        });
-    },
-
-    // Tạo refresh token
-    generateRefreshToken: user => {
-        if (!process.env.JWT_REFRESH_SECRET) {
-            throw new Error('JWT_REFRESH_SECRET is not defined');
-        }
-        if (!process.env.JWT_REFRESH_EXPIRE) {
-            throw new Error('JWT_REFRESH_EXPIRE is not defined');
-        }
-        return jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, {
-            expiresIn: process.env.JWT_REFRESH_EXPIRE
-        });
-    },
-    refreshTokenService2: async refreshToken => {
-        try {
-            if (!refreshToken) {
-                throw new Error('No refresh token provided');
-            }
-
-            if (!process.env.JWT_REFRESH_SECRET) {
-                throw new Error('JWT_REFRESH_SECRET is not defined');
-            }
-
-            const queryGetTokenByRefreshToken = `SELECT * FROM Token WHERE refreshToken = ?`;
-            const [tokenRecord] = await pool.execute(
-                queryGetTokenByRefreshToken,
-                [refreshToken]
-            );
-
-            if (tokenRecord.length < 0) {
-                throw new Error('Invalid or expired refresh token');
-            }
-
-            if (
-                !tokenRecord[0] ||
-                !tokenRecord[0].isValid ||
-                tokenRecord[0].expiresAt < new Date()
-            ) {
-                throw new Error('Invalid or expired refresh token 2');
-            }
-
-            const decoded = jwt.verify(
-                refreshToken,
-                process.env.JWT_REFRESH_SECRET
-            );
-
-            //get user by decodeid
-            const queryGetUserById = `SELECT * FROM User WHERE id = ?`;
-            const [user] = await pool.execute(queryGetUserById, [decoded.id]);
-
-            if (!user || user.length < 0) {
-                throw new Error('User not found');
-            }
-
-            const newAccessToken = authService.generateAccessToken(user[0]);
-            const newRefreshToken = authService.generateRefreshToken(user[0]);
-
-            const expiresAt = getExpiresAtFromDuration(
-                process.env.JWT_REFRESH_EXPIRE
-            );
-
-            //tim va update token refresh
-            const queryUpdateToken = `UPDATE Token SET refreshToken = ?, expireAt = ?, isValid = ? WHERE refreshToken = ?`;
-            const [response] = await pool.execute(queryUpdateToken, [
-                newRefreshToken,
-                expiresAt,
-                true,
-                refreshToken
-            ]);
-            return {
-                accessToken: newAccessToken,
-                refreshToken: newRefreshToken
-            };
-        } catch (error) {
-            throw new Error(error.message || 'Invalid refresh token');
-        }
-    },
-    refreshTokenService: async refreshToken => {
-        try {
-            if (!refreshToken) {
-                throw new Error('No refresh token provided');
-            }
-
-            if (!process.env.JWT_REFRESH_SECRET) {
-                throw new Error('JWT_REFRESH_SECRET is not defined');
-            }
-
-            const tokenRecord = await Token.findOne({ refreshToken });
-            if (
-                !tokenRecord ||
-                !tokenRecord.isValid ||
-                tokenRecord.expiresAt < new Date()
-            ) {
-                throw new Error('Invalid or expired refresh token');
-            }
-
-            const decoded = jwt.verify(
-                refreshToken,
-                process.env.JWT_REFRESH_SECRET
-            );
-
-            const user = await User.findById(decoded.id);
-            if (!user) {
-                throw new Error('User not found');
-            }
-
-            const newAccessToken = authService.generateAccessToken(user);
-            const newRefreshToken = authService.generateRefreshToken(user);
-
-            const expiresAt = getExpiresAtFromDuration(
-                process.env.JWT_REFRESH_EXPIRE
-            );
-
-            await Token.findOneAndUpdate(
-                { refreshToken }, //dieu kien query
-                {
-                    refreshToken: newRefreshToken,
-                    expiresAt,
-                    isValid: true
-                }, //dữ liệu cần thay đổi
-                { new: true } //trả về bản ghi mới sau khi thay đổi
-            );
-
-            return {
-                accessToken: newAccessToken,
-                refreshToken: newRefreshToken
-            };
-        } catch (error) {
-            throw new Error(error.message || 'Invalid refresh token');
+            return res
+                .status(500)
+                .json({ message: 'Server Error ' + error.message });
         }
     },
 
-    invalidateTokenService: async refreshToken => {
-        try {
-            await Token.findOneAndUpdate({ refreshToken }, { isValid: false });
-        } catch (error) {
-            throw new Error('Error invalidating token');
+    verifyTokenAdminAndYourself: async (req, res, next) => {
+        console.log('id request ', req.user);
+        console.log('id param ', req.params);
+
+        const idRole = req.user.idRole;
+        const userId = req.user.id;
+        const requestedId = req.params.id;
+
+        const ADMIN_ROLE_ID = 2;
+
+        if (userId === requestedId || idRole === ADMIN_ROLE_ID) {
+            return next();
         }
+
+        return res.status(403).json({ message: 'Not Permission' });
     }
 };
 
-module.exports = authService;
-module.exports = authService;
+module.exports = middleware;

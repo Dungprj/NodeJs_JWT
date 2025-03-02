@@ -4,7 +4,7 @@ require('dotenv').config();
 const pool = require('../config/db');
 
 const userService = {
-    getListUserService2: async () => {
+    getListUserService: async () => {
         try {
             const query = 'SELECT * FROM User';
             const [users, fields] = await pool.query(query);
@@ -14,7 +14,7 @@ const userService = {
             return null;
         }
     },
-    deleteUser2: async id => {
+    deleteUser: async id => {
         try {
             const query = 'DELETE FROM User where id = ?';
             const [respone] = await pool.execute(query, [id]);
@@ -33,36 +33,8 @@ const userService = {
             throw new Error(error.message);
         }
     },
-    getListUserService: async () => {
-        try {
-            const users = await User.find({});
-            return users;
-        } catch (error) {
-            console.log(error);
-            return null;
-        }
-    },
 
-    deleteUser: async id => {
-        try {
-            const user = await User.findById(id);
-            if (!user)
-                return {
-                    message: 'User not found !'
-                };
-            const status = await User.deleteOne({ _id: id });
-            return {
-                message:
-                    status.deletedCount > 0
-                        ? 'Delete Successfully !'
-                        : 'Deleted failed'
-            };
-        } catch (error) {
-            console.log(error);
-            return null;
-        }
-    },
-    updateUser2: async (id, data) => {
+    updateUser: async (id, data) => {
         try {
             //kiem tra user co ton tai hay chua
             const queryCheckExits = `SELECT * FROM User WHERE id = ?`;
@@ -81,22 +53,6 @@ const userService = {
             return respone.affectedRows > 0;
         } catch (error) {
             throw new Error(error.message);
-        }
-    },
-    updateUser: async (id, data) => {
-        try {
-            const user = await User.findById(id);
-            if (!user)
-                return {
-                    message: 'User not found !'
-                };
-            const status = await User.updateOne({ _id: id }, data);
-            return {
-                status: acknowledged
-            };
-        } catch (error) {
-            console.log(error);
-            return null;
         }
     }
 };

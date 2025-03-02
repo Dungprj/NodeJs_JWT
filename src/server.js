@@ -1,8 +1,7 @@
 require('dotenv').config();
 const express = require('express'); //commonjs
 const cookieParser = require('cookie-parser');
-const configViewEngine = require('./config/viewEngine');
-const connection = require('./config/database');
+
 const cors = require('cors');
 const middleware = require('./middleware/auth');
 
@@ -28,9 +27,6 @@ app.use('/v1/user', userRoutes);
 
 (async () => {
     try {
-        //using mongoose
-        await connection();
-
         app.listen(port, () => {
             console.log(`Backend Nodejs App listening on port ${port}`);
         });

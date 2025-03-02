@@ -2,10 +2,10 @@ const authService = require('../services/authService');
 
 const authController = {
     // Tạo user mới
-    createUser: async (req, res) => {
+    handleRegister: async (req, res) => {
         try {
             const { name, email, password } = req.body;
-            const respone = await authService.createUserService2(
+            const respone = await authService.handleRegisterService(
                 name,
                 email,
                 password
@@ -22,18 +22,16 @@ const authController = {
     handleLogin: async (req, res) => {
         try {
             const { email, password } = req.body;
-            const data = await authService.handleLoginService2(email, password);
+            const data = await authService.handleLoginService(email, password);
 
-            return res.status(200).json(data);
-
-            // return res.status(200).json({
-            //     message: data.message,
-            //     accessToken: data.accessToken,
-            //     refreshToken: data.refreshToken, // Trả refresh token trong body
-            //     user: data.user
-            // });
+            return res.status(200).json({
+                message: data.message,
+                accessToken: data.accessToken,
+                refreshToken: data.refreshToken, // Trả refresh token trong body
+                user: data.user
+            });
         } catch (error) {
-            return res.status(401).json({ message: error.message });
+            return res.status(500).json({ message: error.message });
         }
     },
 
@@ -47,15 +45,13 @@ const authController = {
                     .json({ message: 'No refresh token provided' });
             }
 
-            const data = await authService.refreshTokenService2(refreshToken);
+            const data = await authService.refreshTokenService(refreshToken);
 
-            return res.status(200).json(data);
-
-            // return res.status(200).json({
-            //     message: 'Token refreshed successfully',
-            //     accessToken: data.accessToken,
-            //     refreshToken: data.refreshToken // Trả refresh token mới trong body
-            // });
+            return res.status(200).json({
+                message: 'Token refreshed successfully',
+                accessToken: data.accessToken,
+                refreshToken: data.refreshToken // Trả refresh token mới trong body
+            });
         } catch (error) {
             return res.status(401).json({ message: error.message });
         }

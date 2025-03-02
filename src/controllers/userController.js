@@ -2,7 +2,7 @@ const userService = require('../services/userService');
 
 const userController = {
     getListUser: async (req, res) => {
-        const data = await userService.getListUserService2();
+        const data = await userService.getListUserService();
         return res.status(200).json(data);
     },
     getuserById: async (req, res) => {
@@ -12,7 +12,7 @@ const userController = {
 
     deleteUser: async (req, res) => {
         try {
-            const respone = await userService.deleteUser2(req.params.id);
+            const respone = await userService.deleteUser(req.params.id);
             return respone
                 ? res.status(200).json('Delete successfully')
                 : res.status(404).json('Delete failed');
@@ -23,7 +23,7 @@ const userController = {
     },
     updateUser: async (req, res) => {
         try {
-            const response = await userService.updateUser2(
+            const response = await userService.updateUser(
                 req.params.id,
                 req.body
             );
