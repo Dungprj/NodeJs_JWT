@@ -22,16 +22,72 @@ const authController = {
     handleLogin: async (req, res) => {
         try {
             const { email, password } = req.body;
+
             const data = await authService.handleLoginService(email, password);
 
+            // return res.status(200).json({
+            //     message: data.message,
+            //     accessToken: data.accessToken,
+            //     refreshToken: data.refreshToken, // Trả refresh token trong body
+            //     user: data.user,
+            //     permissions:
+            // });
+
+            const dataConvert = data.permissions.map(pers => {
+                return {
+                    [pers]: true
+                };
+            });
+
+            // Gộp mảng thành một object
+            const mergedObject = dataConvert.reduce((result, item) => {
+                return Object.assign(result, item);
+            }, {});
+
+            console.log('list', dataConvert);
+
             return res.status(200).json({
-                message: data.message,
-                accessToken: data.accessToken,
-                refreshToken: data.refreshToken, // Trả refresh token trong body
-                user: data.user
+                status: 'success',
+                message: 'Đăng nhập thành công',
+                data: {
+                    token: data.accessToken,
+                    refreshToken: data.refreshToken,
+                    user: {
+                        email: email,
+                        userTitle: data.user.name,
+                        databaseId: data.user.id,
+                        roles: [
+                            {
+                                roleId: data.user.roleId,
+                                roleName: data.user.roleName
+
+                                //khong tra ve list permission nua
+                                // permissions: mergedObject
+                                // permissions: {
+                                //     salePermission: true,
+                                //     partiesPermission: true,
+                                //     purchasePermission: true,
+                                //     productPermission: true,
+                                //     profileEditPermission: false,
+                                //     addExpensePermission: false,
+                                //     lossProfitPermission: false,
+                                //     dueListPermission: false,
+                                //     stockPermission: false,
+                                //     reportsPermission: false,
+                                //     salesListPermission: false,
+                                //     purchaseListPermission: false
+                                // }
+                            }
+                        ]
+                    }
+                }
             });
         } catch (error) {
-            return res.status(500).json({ message: error.message });
+            return res.status(500).json({
+                status: error.message,
+                message: 'Email hoặc mật khẩu không đúng',
+                data: null
+            });
         }
     },
 
