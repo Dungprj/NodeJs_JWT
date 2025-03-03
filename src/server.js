@@ -28,6 +28,7 @@ app.use('/v1/user', userRoutes);
 (async () => {
     try {
         app.listen(port, () => {
+            console.log(`>>> Connect to ${process.env.DB_NAME} successful`);
             console.log(`Backend Nodejs App listening on port ${port}`);
         });
     } catch (error) {

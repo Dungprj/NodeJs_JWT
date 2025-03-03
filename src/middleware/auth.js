@@ -30,6 +30,7 @@ const middleware = {
         // Kiểm tra whitelist
         if (isWhitelisted(req.originalUrl)) {
             console.log('Accessing white list path:', req.originalUrl);
+
             return next();
         }
 
