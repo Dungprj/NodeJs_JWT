@@ -64,7 +64,7 @@ const middleware = {
                     const [permissions] = await pool.query(
                         `SELECT p.route, p.method 
                          FROM permissions p
-                         JOIN role_permissions rp ON p.id = rp.idPermission
+                         JOIN model_has_permissions rp ON p.id = rp.idPermission
                          WHERE rp.idRole = ?`,
                         [idRole]
                     );

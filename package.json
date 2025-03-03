@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon ./src/server.js",
     "start": "node ./src/server.js",
-    "build": "copyfiles -u 1 src/**/* dist/"
+    "build": "npm run build-bable"
   },
   "keywords": [
     "nodejs",

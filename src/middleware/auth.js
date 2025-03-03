@@ -56,69 +56,6 @@ const middleware = {
 
                     // Lưu thông tin user vào req
                     req.user = user;
-
-                    // Lấy idRole từ token
-                    const idRole = user.idRole;
-
-                    // Truy vấn database để lấy danh sách quyền dựa trên idRole
-                    const [permissions] = await pool.query(
-                        `SELECT p.route, p.method 
-                         FROM permissions p
-                         JOIN role_permissions rp ON p.id = rp.idPermission
-                         WHERE rp.idRole = ?`,
-                        [idRole]
-                    );
-
-                    console.log(`Danh sach quyen cua ${idRole} :`);
-                    permissions.forEach(perm => {
-                        console.log(perm.route, perm.method);
-                    });
-
-                    // Lưu danh sách quyền vào req để middleware sau dùng
-                    req.permissions = permissions;
-
-                    // Kiểm tra quyền truy cập
-                    const requestedRoute = req.originalUrl; // Ví dụ: '/v1/user/35'
-                    const requestedMethod = req.method; // Ví dụ: 'DELETE'
-
-                    let hasPermission = false;
-
-                    for (const perm of permissions) {
-                        // Chuyển route từ DB thành pattern và so sánh với requestedRoute
-                        const routePattern = versionRoute + perm.route; // Ví dụ: '/v1/user/:id'
-
-                        // Tạo hàm matcher từ pattern
-                        const matcher = match(routePattern, {
-                            decode: decodeURIComponent
-                        });
-
-                        // Kiểm tra khớp route
-                        const routeMatch = matcher(requestedRoute);
-
-                        const methodMatch =
-                            perm.method.toUpperCase() === requestedMethod;
-
-                        console.log('Route DB pattern:', routePattern);
-                        console.log('Route request:', requestedRoute);
-                        console.log('Route match:', !!routeMatch); // routeMatch là object nếu khớp, false nếu không
-                        console.log('Method DB:', perm.method);
-                        console.log('Method request:', requestedMethod);
-                        console.log('Method match:', methodMatch);
-
-                        if (routeMatch && methodMatch) {
-                            hasPermission = true;
-                            break;
-                        }
-                    }
-
-                    console.log('Has permission:', hasPermission);
-
-                    if (!hasPermission) {
-                        return res.status(403).json({
-                            message: 'Forbidden: You do not have permission'
-                        });
-                    }
-
                     next();
                 }
             );
