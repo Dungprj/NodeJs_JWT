@@ -13,7 +13,7 @@ const getExpiresAtFromDuration = duration => {
 
 const authService = {
     handleRegisterService: async (
-        name,
+        name = '',
         email,
         password,
         address = 'ha noi',

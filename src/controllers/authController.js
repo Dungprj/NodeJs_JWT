@@ -4,7 +4,8 @@ const authController = {
     // Tạo user mới
     handleRegister: async (req, res) => {
         try {
-            const { name, email, password } = req.body;
+            const { email, password } = req.body;
+            const name = '';
             const respone = await authService.handleRegisterService(
                 name,
                 email,
