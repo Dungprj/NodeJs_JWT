@@ -6,13 +6,16 @@ const ms = require('ms');
 const moment = require('moment-timezone');
 
 // Hàm tính thời gian hết hạn (expiresAt) dựa trên thời gian UTC+7
-// Hàm tính thời gian hết hạn (expiresAt) dựa trên giá trị từ .env
-const getExpiresAtFromDuration = duration => {
+const getUTCPlus7Time = () => {
     // Lấy thời gian UTC
     const utcNow = new Date(); // Đây là thời gian UTC
     // Cộng thêm 7 giờ để chuyển sang UTC+7
     const utcPlus7Offset = 7 * 60 * 60 * 1000; // 7 giờ tính bằng mili giây
-    const utcPlus7Time = new Date(utcNow.getTime() + utcPlus7Offset);
+    return utcPlus7Offset;
+};
+// Hàm tính thời gian hết hạn (expiresAt) dựa trên giá trị từ .env
+const getExpiresAtFromDuration = duration => {
+    const utcPlus7Time = new Date(utcNow.getTime() + getUTCPlus7Time());
     const durationInMs = ms(duration);
     return new Date(utcPlus7Time.getTime() + durationInMs);
 };
