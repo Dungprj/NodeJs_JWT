@@ -87,14 +87,18 @@ const authController = {
     // Yêu cầu refresh token để tạo access token mới (client gửi refresh token trong body)
     requestRefreshToken: async (req, res) => {
         try {
-            const { refreshToken } = req.body; // Lấy refresh token từ body thay vì cookie
+            const { userId, accessToken, refreshToken } = req.body; // Lấy refresh token từ body thay vì cookie
             if (!refreshToken) {
                 return res
                     .status(400)
                     .json({ message: 'No refresh token provided' });
             }
 
-            const data = await authService.refreshTokenService(refreshToken);
+            const data = await authService.refreshTokenService(
+                userId,
+                accessToken,
+                refreshToken
+            );
 
             return res.status(200).json({
                 message: 'Token refreshed successfully',

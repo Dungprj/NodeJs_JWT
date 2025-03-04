@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const { pathToRegexp, match } = require('path-to-regexp'); // Thêm match từ path-to-regexp
+const { pathToRegexp, match } = require('path-to-regexp');
 const pool = require('../config/db');
 
 const versionRoute = '/v1';
@@ -30,7 +30,6 @@ const middleware = {
         // Kiểm tra whitelist
         if (isWhitelisted(req.originalUrl)) {
             console.log('Accessing white list path:', req.originalUrl);
-
             return next();
         }
 
@@ -43,26 +42,35 @@ const middleware = {
         }
 
         try {
-            // Xác thực token
-            jwt.verify(
-                token,
-                process.env.JWT_ACCESS_SECRET,
-                async (err, user) => {
-                    if (err) {
-                        return res
-                            .status(403)
-                            .json({ message: 'Token is invalid' });
-                    }
+            // Kiểm tra token trong database
+            const queryCheckToken = `
+                SELECT * FROM Token 
+                WHERE accessToken = ? AND isValid = true AND accessExpireAt > NOW()
+            `;
+            const [tokenRecord] = await pool.execute(queryCheckToken, [token]);
 
-                    // Lưu thông tin user vào req
-                    req.user = user;
-                    next();
+            if (tokenRecord.length === 0) {
+                return res
+                    .status(403)
+                    .json({ message: 'Token is invalid or revoked' });
+            }
+
+            // Xác thực token bằng JWT
+            jwt.verify(token, process.env.JWT_ACCESS_SECRET, (err, user) => {
+                if (err) {
+                    return res
+                        .status(403)
+                        .json({ message: 'Token is invalid' });
                 }
-            );
+
+                // Lưu thông tin user vào req
+                req.user = user;
+                next();
+            });
         } catch (error) {
             return res
                 .status(500)
-                .json({ message: 'Server Error ' + error.message });
+                .json({ message: 'Server Error: ' + error.message });
         }
     },
 
@@ -74,7 +82,7 @@ const middleware = {
         console.log('id request ', req.user);
         console.log('id param ', req.params);
 
-        const idRole = req.user.idRole;
+        const idRole = req.user.idRole; // Giả sử idRole nằm trong payload JWT
         const userId = req.user.id;
         const requestedId = req.params.id;
 

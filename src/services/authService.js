@@ -88,20 +88,29 @@ const authService = {
 
             const accessToken = authService.generateAccessToken(user[0]);
             const refreshToken = authService.generateRefreshToken(user[0]);
-            const expiresAt = getExpiresAtFromDuration(
+            const accessExpiresAt = getExpiresAtFromDuration(
+                process.env.JWT_ACCESS_EXPIRE
+            );
+            const refreshExpiresAt = getExpiresAtFromDuration(
                 process.env.JWT_REFRESH_EXPIRE
             );
 
-            const queryInsertToken = `INSERT INTO Token (userId, refreshToken, expireAt, isValid) VALUES (?, ?, ?, ?)`;
+            // Lưu cả access token và refresh token vào bảng Token
+            const queryInsertToken = `
+                INSERT INTO Token (userId, accessToken, refreshToken, accessExpireAt, refreshExpireAt, isValid) 
+                VALUES (?, ?, ?, ?, ?, ?)
+            `;
             const [response] = await pool.execute(queryInsertToken, [
                 user[0].id,
+                accessToken,
                 refreshToken,
-                expiresAt,
+                accessExpiresAt,
+                refreshExpiresAt,
                 true
             ]);
 
             if (response.affectedRows === 0) {
-                throw new Error('Error inserting token');
+                throw new Error('Error inserting tokens');
             }
 
             const [permissions] = await pool.query(
@@ -162,63 +171,93 @@ const authService = {
         );
     },
 
-    refreshTokenService: async refreshToken => {
+    refreshTokenService: async (userId, accessToken, refreshToken) => {
         try {
-            if (!refreshToken) {
-                throw new Error('No refresh token provided');
+            // Kiểm tra các tham số đầu vào
+            if (!userId || !accessToken || !refreshToken) {
+                throw new Error(
+                    'userId, accessToken, and refreshToken are required'
+                );
             }
 
-            const queryGetTokenByRefreshToken = `SELECT * FROM Token WHERE refreshToken = ?`;
-            const [tokenRecord] = await pool.execute(
-                queryGetTokenByRefreshToken,
-                [refreshToken]
-            );
+            // Kiểm tra cặp token trong database
+            const queryGetTokenPair = `
+                SELECT * FROM Token 
+                WHERE userId = ? AND accessToken = ? AND refreshToken = ?
+            `;
+            const [tokenRecord] = await pool.execute(queryGetTokenPair, [
+                userId,
+                accessToken,
+                refreshToken
+            ]);
 
             if (tokenRecord.length === 0) {
-                throw new Error('Invalid or expired refresh token');
+                throw new Error('Invalid token pair or userId');
             }
 
+            // Kiểm tra token có hợp lệ và chưa hết hạn không
             if (
                 !tokenRecord[0].isValid ||
-                tokenRecord[0].expireAt < new Date()
+                tokenRecord[0].refreshExpireAt < new Date()
             ) {
                 throw new Error('Invalid or expired refresh token');
             }
 
+            // Xác thực refresh token bằng JWT
             const decoded = jwt.verify(
                 refreshToken,
                 process.env.JWT_REFRESH_SECRET
             );
+
+            // Kiểm tra userId từ JWT có khớp với userId truyền vào không
+            if (decoded.id !== userId) {
+                throw new Error('UserId does not match token');
+            }
+
+            // Lấy thông tin user
             const queryGetUserById = `SELECT * FROM users WHERE id = ?`;
-            const [user] = await pool.execute(queryGetUserById, [decoded.id]);
+            const [user] = await pool.execute(queryGetUserById, [userId]);
 
             if (!user || user.length === 0) {
                 throw new Error('User not found');
             }
 
+            // Tạo token mới
             const newAccessToken = authService.generateAccessToken(user[0]);
             const newRefreshToken = authService.generateRefreshToken(user[0]);
-            const expiresAt = getExpiresAtFromDuration(
+            const accessExpiresAt = getExpiresAtFromDuration(
+                process.env.JWT_ACCESS_EXPIRE
+            );
+            const refreshExpiresAt = getExpiresAtFromDuration(
                 process.env.JWT_REFRESH_EXPIRE
             );
 
-            const queryInvalidateOldToken = `UPDATE Token SET isValid = ? WHERE refreshToken = ?`;
-            await pool.execute(queryInvalidateOldToken, [false, refreshToken]);
+            // Xóa token cũ
+            const queryDeleteOldToken = `
+                DELETE FROM Token WHERE refreshToken = ?
+            `;
+            await pool.execute(queryDeleteOldToken, [refreshToken]);
 
-            const queryInsertNewToken = `INSERT INTO Token (userId, refreshToken, expireAt, isValid) VALUES (?, ?, ?, ?)`;
+            // Lưu token mới
+            const queryInsertNewToken = `
+                INSERT INTO Token (userId, accessToken, refreshToken, accessExpireAt, refreshExpireAt, isValid) 
+                VALUES (?, ?, ?, ?, ?, ?)
+            `;
             const [response] = await pool.execute(queryInsertNewToken, [
                 user[0].id,
+                newAccessToken,
                 newRefreshToken,
-                expiresAt,
+                accessExpiresAt,
+                refreshExpiresAt,
                 true
             ]);
 
             if (response.affectedRows === 0) {
-                throw new Error('Error inserting new refresh token');
+                throw new Error('Error inserting new tokens');
             }
 
             return {
-                user: user[0],
+                userId: user[0].id,
                 accessToken: newAccessToken,
                 refreshToken: newRefreshToken
             };
@@ -229,7 +268,9 @@ const authService = {
 
     invalidateTokenService: async refreshToken => {
         try {
-            const queryInvalidateToken = `UPDATE Token SET isValid = ? WHERE refreshToken = ?`;
+            const queryInvalidateToken = `
+                UPDATE Token SET isValid = ? WHERE refreshToken = ?
+            `;
             const [response] = await pool.execute(queryInvalidateToken, [
                 false,
                 refreshToken
@@ -262,7 +303,9 @@ const authService = {
             const hashedNewPassword = await bcrypt.hash(newPassword, salt);
 
             // Cập nhật mật khẩu mới trong bảng users
-            const queryUpdatePassword = `UPDATE users SET password = ?, updated_at = ? WHERE id = ?`;
+            const queryUpdatePassword = `
+                UPDATE users SET password = ?, updated_at = ? WHERE id = ?
+            `;
             const updatedAt = new Date();
             const [updateResponse] = await pool.execute(queryUpdatePassword, [
                 hashedNewPassword,
@@ -274,8 +317,12 @@ const authService = {
                 throw new Error('Error updating password');
             }
 
-            // Vô hiệu hóa tất cả refreshToken hiện tại của user
-            const queryInvalidateAllTokens = `UPDATE Token SET isValid = ? WHERE userId = ?`;
+            //có thể xóa luôn token
+
+            // Vô hiệu hóa tất cả token (cả access và refresh) của user
+            const queryInvalidateAllTokens = `
+                UPDATE Token SET isValid = ? WHERE userId = ?
+            `;
             const [invalidateResponse] = await pool.execute(
                 queryInvalidateAllTokens,
                 [false, userId]
@@ -289,6 +336,45 @@ const authService = {
         } catch (error) {
             throw new Error(error.message || 'Error changing password');
         }
+    },
+
+    // Hàm mới để lưu token (dùng trong authController)
+    storeTokens: async (userId, accessToken, refreshToken) => {
+        const accessExpiresAt = getExpiresAtFromDuration(
+            process.env.JWT_ACCESS_EXPIRE
+        );
+        const refreshExpiresAt = getExpiresAtFromDuration(
+            process.env.JWT_REFRESH_EXPIRE
+        );
+
+        const queryInsertToken = `
+            INSERT INTO Token (userId, accessToken, refreshToken, accessExpireAt, expireAt, isValid) 
+            VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        const [response] = await pool.execute(queryInsertToken, [
+            userId,
+            accessToken,
+            refreshToken,
+            accessExpiresAt,
+            refreshExpiresAt,
+            true
+        ]);
+
+        if (response.affectedRows === 0) {
+            throw new Error('Error storing tokens');
+        }
+    },
+
+    // Hàm mới để vô hiệu hóa tất cả token (dùng trong authController)
+    invalidateAllTokens: async userId => {
+        const queryInvalidateAllTokens = `
+            UPDATE Token SET isValid = ? WHERE userId = ?
+        `;
+        const [response] = await pool.execute(queryInvalidateAllTokens, [
+            false,
+            userId
+        ]);
+        return response.affectedRows; // Số token bị vô hiệu hóa
     }
 };
 
