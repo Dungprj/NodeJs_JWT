@@ -5,28 +5,16 @@ const pool = require('../config/db');
 const ms = require('ms');
 const moment = require('moment-timezone');
 
-// Hàm lấy thời gian hiện tại tại UTC+7 sử dụng moment-timezone
-const getUTCPlus7Time = () => {
-    const utcPlus7Time = moment().tz('Asia/Ho_Chi_Minh'); // Múi giờ Việt Nam (UTC+7)
-    const utcPlus7Date = utcPlus7Time.toDate();
-    console.log(
-        'UTC+7 Time (moment):',
-        utcPlus7Time.format('YYYY-MM-DD HH:mm:ss Z')
-    ); // Log chi tiết
-    console.log('UTC+7 Time (Date):', utcPlus7Date); // Log đối tượng Date
-    return utcPlus7Date;
-};
-
 // Hàm tính thời gian hết hạn (expiresAt) dựa trên thời gian UTC+7
+// Hàm tính thời gian hết hạn (expiresAt) dựa trên giá trị từ .env
 const getExpiresAtFromDuration = duration => {
-    const utcPlus7Time = getUTCPlus7Time();
+    // Lấy thời gian UTC
+    const utcNow = new Date(); // Đây là thời gian UTC
+    // Cộng thêm 7 giờ để chuyển sang UTC+7
+    const utcPlus7Offset = 7 * 60 * 60 * 1000; // 7 giờ tính bằng mili giây
+    const utcPlus7Time = new Date(utcNow.getTime() + utcPlus7Offset);
     const durationInMs = ms(duration);
-    const expiresAt = new Date(utcPlus7Time.getTime() + durationInMs);
-    console.log(
-        'Expires At (UTC+7):',
-        moment(expiresAt).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss Z')
-    );
-    return expiresAt;
+    return new Date(utcPlus7Time.getTime() + durationInMs);
 };
 const authService = {
     handleRegisterService: async (
