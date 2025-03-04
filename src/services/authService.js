@@ -3,14 +3,18 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const ms = require('ms');
+const moment = require('moment-timezone');
 
-// Hàm tính thời gian hết hạn (expiresAt) dựa trên giá trị từ .env
+// Hàm lấy thời gian hiện tại tại UTC+7 sử dụng moment-timezone
+const getUTCPlus7Time = () => {
+    const utcPlus7Time = moment().tz('Asia/Ho_Chi_Minh'); // Múi giờ Việt Nam (UTC+7)
+    console.log('UTC+7 Time:', utcPlus7Time.format()); // Log để kiểm tra
+    return utcPlus7Time.toDate();
+};
+
+// Hàm tính thời gian hết hạn (expiresAt) dựa trên thời gian UTC+7
 const getExpiresAtFromDuration = duration => {
-    // Lấy thời gian UTC
-    const utcNow = new Date(); // Đây là thời gian UTC
-    // Cộng thêm 7 giờ để chuyển sang UTC+7
-    const utcPlus7Offset = 7 * 60 * 60 * 1000; // 7 giờ tính bằng mili giây
-    const utcPlus7Time = new Date(utcNow.getTime() + utcPlus7Offset);
+    const utcPlus7Time = getUTCPlus7Time();
     const durationInMs = ms(duration);
     return new Date(utcPlus7Time.getTime() + durationInMs);
 };
@@ -99,10 +103,12 @@ const authService = {
                 process.env.JWT_REFRESH_EXPIRE
             );
 
+            const createAt = getUTCPlus7Time();
+
             // Lưu cả access token và refresh token vào bảng Token
             const queryInsertToken = `
-                INSERT INTO Token (userId, accessToken, refreshToken, accessExpireAt, refreshExpireAt, isValid) 
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO Token (userId, accessToken, refreshToken, accessExpireAt, refreshExpireAt, isValid,createAt) 
+                VALUES (?, ?, ?, ?, ?, ?,?)
             `;
             const [response] = await pool.execute(queryInsertToken, [
                 user[0].id,
@@ -110,7 +116,8 @@ const authService = {
                 refreshToken,
                 accessExpiresAt,
                 refreshExpiresAt,
-                true
+                true,
+                createAt
             ]);
 
             if (response.affectedRows === 0) {
