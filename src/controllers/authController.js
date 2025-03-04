@@ -37,8 +37,6 @@ const authController = {
                 return Object.assign(result, item);
             }, {});
 
-            console.log('list', dataConvert);
-
             return res.status(200).json({
                 status: 'success',
                 message: 'Đăng nhập thành công',
