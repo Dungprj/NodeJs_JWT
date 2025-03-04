@@ -6,9 +6,13 @@ const ms = require('ms');
 
 // Hàm tính thời gian hết hạn (expiresAt) dựa trên giá trị từ .env
 const getExpiresAtFromDuration = duration => {
-    const now = new Date();
+    // Lấy thời gian UTC
+    const utcNow = new Date(); // Đây là thời gian UTC
+    // Cộng thêm 7 giờ để chuyển sang UTC+7
+    const utcPlus7Offset = 7 * 60 * 60 * 1000; // 7 giờ tính bằng mili giây
+    const utcPlus7Time = new Date(utcNow.getTime() + utcPlus7Offset);
     const durationInMs = ms(duration);
-    return new Date(now.getTime() + durationInMs);
+    return new Date(utcPlus7Time.getTime() + durationInMs);
 };
 
 const authService = {
