@@ -25,14 +25,6 @@ const authController = {
 
             const data = await authService.handleLoginService(email, password);
 
-            // return res.status(200).json({
-            //     message: data.message,
-            //     accessToken: data.accessToken,
-            //     refreshToken: data.refreshToken, // Trả refresh token trong body
-            //     user: data.user,
-            //     permissions:
-            // });
-
             const dataConvert = data.permissions.map(pers => {
                 return {
                     [pers]: true

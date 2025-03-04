@@ -4,7 +4,9 @@ const cookieParser = require('cookie-parser');
 
 const cors = require('cors');
 const middleware = require('./middleware/auth');
+const middleWareNotFound = require('./middleware/notFound');
 
+const middleWareError = require('./middleware/error');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const app = express();
@@ -18,12 +20,16 @@ app.use(cookieParser());
 app.use(express.json()); // for json
 app.use(express.urlencoded({ extended: true })); // for form data
 
-app.use(middleware.auth);
 //khai báo route
-app.use('/v1/auth/', authRoutes);
+app.use('/v1/auth', authRoutes);
 //config middleware
+app.use('/v1/user', middleware.auth, userRoutes);
 
-app.use('/v1/user', userRoutes);
+// Middleware xử lý 404 - Đặt ở cuối cùng
+app.use(middleWareNotFound.notFound);
+
+// Middleware xử lý lỗi chung (nếu có lỗi xảy ra trong quá trình xử lý)
+app.use(middleWareError.error);
 
 (async () => {
     try {

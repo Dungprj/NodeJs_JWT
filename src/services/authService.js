@@ -169,7 +169,9 @@ const authService = {
                 permissions: permissions.map(per => per.name)
             };
         } catch (error) {
-            throw new Error(error.message || 'Error logging in');
+            throw new Error(
+                'Loi dang nhap' + error.message || 'Error logging in'
+            );
         }
     },
 
