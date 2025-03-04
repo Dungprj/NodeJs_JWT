@@ -1,38 +1,14 @@
+require('dotenv').config();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
 const pool = require('../config/db');
-
 const ms = require('ms');
-const durationInMs = ms(process.env.JWT_REFRESH_EXPIRE);
-
-require('dotenv').config();
 
 // Hàm tính thời gian hết hạn (expiresAt) dựa trên giá trị từ .env
 const getExpiresAtFromDuration = duration => {
     const now = new Date();
-    const durationInMs = parseDurationToMilliseconds(duration);
+    const durationInMs = ms(duration);
     return new Date(now.getTime() + durationInMs);
-};
-
-// Hàm chuyển đổi định dạng thời gian từ chuỗi sang milliseconds
-const parseDurationToMilliseconds = duration => {
-    const units = {
-        s: 1000, // seconds
-        m: 1000 * 60, // minutes
-        h: 1000 * 60 * 60, // hours
-        d: 1000 * 60 * 60 * 24, // days
-        y: 1000 * 60 * 60 * 24 * 365 // years
-    };
-
-    const match = duration.match(/^(\d+)([smhdy])$/);
-    if (!match) {
-        throw new Error(`Invalid duration format: ${duration}`);
-    }
-
-    const value = parseInt(match[1], 10);
-    const unit = match[2];
-    return value * units[unit];
 };
 
 const authService = {
@@ -60,19 +36,15 @@ const authService = {
         last_login_at = null
     ) => {
         try {
-            //kiem tra user co ton tai hay chua
             const queryCheckExits = `SELECT * FROM users WHERE email = ?`;
-
             const [users] = await pool.execute(queryCheckExits, [email]);
-            //neu user khong ton tai
             if (users.length > 0) {
                 throw new Error('Email is exists');
             }
-            //create salt
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(password, salt);
-            const query = `INSERT INTO users (name, email,address,email_verified_at, password,avatar,parent_id,type,branch_id,cash_register_id,lang,mode,plan_id,plan_expire_date,plan_requests,is_active,user_status,remember_token,created_at,updated_at,last_login_at) VALUES (?, ?, ?,?,?,?, ?, ?,?,?,?, ?, ?,?,?,?, ?, ?,?,?,?)`;
-            const [respone] = await pool.execute(query, [
+            const query = `INSERT INTO users (name, email, address, email_verified_at, password, avatar, parent_id, type, branch_id, cash_register_id, lang, mode, plan_id, plan_expire_date, plan_requests, is_active, user_status, remember_token, created_at, updated_at, last_login_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            const [response] = await pool.execute(query, [
                 name,
                 email,
                 address,
@@ -95,24 +67,18 @@ const authService = {
                 updated_at,
                 last_login_at
             ]);
-            return respone.affectedRows > 0;
+            return response.affectedRows > 0;
         } catch (err) {
-            console.log(err);
             throw new Error(err.message || 'Error creating user');
         }
     },
 
     handleLoginService: async (email, password) => {
         try {
-            //kiem tra user co ton tai hay chua
             const queryCheckExits = `SELECT * FROM users WHERE email = ?`;
             const [user] = await pool.query(queryCheckExits, [email]);
-
-            //neu user khong ton tai
-            if (user.length < 0) {
-                throw new Error(
-                    'Invalid email or password khong ton tai email'
-                );
+            if (user.length === 0) {
+                throw new Error('Invalid email or password');
             }
 
             const isMatch = await bcrypt.compare(password, user[0].password);
@@ -122,12 +88,11 @@ const authService = {
 
             const accessToken = authService.generateAccessToken(user[0]);
             const refreshToken = authService.generateRefreshToken(user[0]);
-
             const expiresAt = getExpiresAtFromDuration(
                 process.env.JWT_REFRESH_EXPIRE
             );
 
-            const queryInsertToken = `INSERT INTO Token (userId, refreshToken, expireAt,isValid) VALUES (?, ?, ?,?)`;
+            const queryInsertToken = `INSERT INTO Token (userId, refreshToken, expireAt, isValid) VALUES (?, ?, ?, ?)`;
             const [response] = await pool.execute(queryInsertToken, [
                 user[0].id,
                 refreshToken,
@@ -135,11 +100,10 @@ const authService = {
                 true
             ]);
 
-            if (response.affectedRows < 0) {
-                throw new Error('Error insert token');
+            if (response.affectedRows === 0) {
+                throw new Error('Error inserting token');
             }
 
-            // Truy vấn database để lấy danh sách quyền dựa trên idRole
             const [permissions] = await pool.query(
                 `SELECT p.name 
                  FROM permissions p
@@ -152,7 +116,7 @@ const authService = {
             const queryGetRoleId = `SELECT DISTINCT r.id 
                                 FROM roles r
                                 JOIN users u ON r.name = u.type
-                                WHERE r.name = ?;`;
+                                WHERE r.name = ?`;
             const [roleId] = await pool.query(queryGetRoleId, [user[0].type]);
 
             return {
@@ -169,53 +133,39 @@ const authService = {
                 permissions: permissions.map(per => per.name)
             };
         } catch (error) {
-            throw new Error(
-                'Loi dang nhap' + error.message || 'Error logging in'
-            );
+            throw new Error(error.message || 'Error logging in');
         }
     },
 
-    // Tạo access token
     generateAccessToken: user => {
-        if (!process.env.JWT_ACCESS_SECRET) {
-            throw new Error('JWT_ACCESS_SECRET is not defined');
-        }
-        if (!process.env.JWT_ACCESS_EXPIRE) {
-            throw new Error('JWT_ACCESS_EXPIRE is not defined');
+        if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_ACCESS_EXPIRE) {
+            throw new Error('JWT configuration is missing');
         }
         return jwt.sign(
             { id: user.id, type: user.type },
             process.env.JWT_ACCESS_SECRET,
-            {
-                expiresIn: process.env.JWT_ACCESS_EXPIRE
-            }
+            { expiresIn: process.env.JWT_ACCESS_EXPIRE }
         );
     },
 
-    // Tạo refresh token
     generateRefreshToken: user => {
-        if (!process.env.JWT_REFRESH_SECRET) {
-            throw new Error('JWT_REFRESH_SECRET is not defined');
-        }
-        if (!process.env.JWT_REFRESH_EXPIRE) {
-            throw new Error('JWT_REFRESH_EXPIRE is not defined');
+        if (
+            !process.env.JWT_REFRESH_SECRET ||
+            !process.env.JWT_REFRESH_EXPIRE
+        ) {
+            throw new Error('JWT configuration is missing');
         }
         return jwt.sign(
             { id: user.id, type: user.type },
             process.env.JWT_REFRESH_SECRET,
-            {
-                expiresIn: process.env.JWT_REFRESH_EXPIRE
-            }
+            { expiresIn: process.env.JWT_REFRESH_EXPIRE }
         );
     },
+
     refreshTokenService: async refreshToken => {
         try {
             if (!refreshToken) {
                 throw new Error('No refresh token provided');
-            }
-
-            if (!process.env.JWT_REFRESH_SECRET) {
-                throw new Error('JWT_REFRESH_SECRET is not defined');
             }
 
             const queryGetTokenByRefreshToken = `SELECT * FROM Token WHERE refreshToken = ?`;
@@ -224,46 +174,49 @@ const authService = {
                 [refreshToken]
             );
 
-            if (tokenRecord.length < 0) {
+            if (tokenRecord.length === 0) {
                 throw new Error('Invalid or expired refresh token');
             }
 
             if (
-                !tokenRecord[0] ||
                 !tokenRecord[0].isValid ||
-                tokenRecord[0].expiresAt < new Date()
+                tokenRecord[0].expireAt < new Date()
             ) {
-                throw new Error('Invalid or expired refresh token 2');
+                throw new Error('Invalid or expired refresh token');
             }
 
             const decoded = jwt.verify(
                 refreshToken,
                 process.env.JWT_REFRESH_SECRET
             );
-
-            //get user by decodeid
             const queryGetUserById = `SELECT * FROM users WHERE id = ?`;
             const [user] = await pool.execute(queryGetUserById, [decoded.id]);
 
-            if (!user || user.length < 0) {
+            if (!user || user.length === 0) {
                 throw new Error('User not found');
             }
 
             const newAccessToken = authService.generateAccessToken(user[0]);
             const newRefreshToken = authService.generateRefreshToken(user[0]);
-
             const expiresAt = getExpiresAtFromDuration(
                 process.env.JWT_REFRESH_EXPIRE
             );
 
-            //tim va update token refresh
-            const queryUpdateToken = `UPDATE Token SET refreshToken = ?, expireAt = ?, isValid = ? WHERE refreshToken = ?`;
-            const [response] = await pool.execute(queryUpdateToken, [
+            const queryInvalidateOldToken = `UPDATE Token SET isValid = ? WHERE refreshToken = ?`;
+            await pool.execute(queryInvalidateOldToken, [false, refreshToken]);
+
+            const queryInsertNewToken = `INSERT INTO Token (userId, refreshToken, expireAt, isValid) VALUES (?, ?, ?, ?)`;
+            const [response] = await pool.execute(queryInsertNewToken, [
+                user[0].id,
                 newRefreshToken,
                 expiresAt,
-                true,
-                refreshToken
+                true
             ]);
+
+            if (response.affectedRows === 0) {
+                throw new Error('Error inserting new refresh token');
+            }
+
             return {
                 user: user[0],
                 accessToken: newAccessToken,
@@ -276,9 +229,65 @@ const authService = {
 
     invalidateTokenService: async refreshToken => {
         try {
-            await Token.findOneAndUpdate({ refreshToken }, { isValid: false });
+            const queryInvalidateToken = `UPDATE Token SET isValid = ? WHERE refreshToken = ?`;
+            const [response] = await pool.execute(queryInvalidateToken, [
+                false,
+                refreshToken
+            ]);
+            if (response.affectedRows === 0) {
+                throw new Error('Token not found or already invalidated');
+            }
         } catch (error) {
-            throw new Error('Error invalidating token');
+            throw new Error(error.message || 'Error invalidating token');
+        }
+    },
+
+    handleChangePasswordService: async (userId, oldPassword, newPassword) => {
+        try {
+            // Kiểm tra user tồn tại
+            const queryGetUserById = `SELECT * FROM users WHERE id = ?`;
+            const [user] = await pool.execute(queryGetUserById, [userId]);
+            if (!user || user.length === 0) {
+                throw new Error('User not found');
+            }
+
+            // Kiểm tra mật khẩu cũ
+            const isMatch = await bcrypt.compare(oldPassword, user[0].password);
+            if (!isMatch) {
+                throw new Error('Old password is incorrect');
+            }
+
+            // Mã hóa mật khẩu mới
+            const salt = await bcrypt.genSalt(10);
+            const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+            // Cập nhật mật khẩu mới trong bảng users
+            const queryUpdatePassword = `UPDATE users SET password = ?, updated_at = ? WHERE id = ?`;
+            const updatedAt = new Date();
+            const [updateResponse] = await pool.execute(queryUpdatePassword, [
+                hashedNewPassword,
+                updatedAt,
+                userId
+            ]);
+
+            if (updateResponse.affectedRows === 0) {
+                throw new Error('Error updating password');
+            }
+
+            // Vô hiệu hóa tất cả refreshToken hiện tại của user
+            const queryInvalidateAllTokens = `UPDATE Token SET isValid = ? WHERE userId = ?`;
+            const [invalidateResponse] = await pool.execute(
+                queryInvalidateAllTokens,
+                [false, userId]
+            );
+
+            return {
+                message:
+                    'Password changed successfully. All other sessions have been logged out.',
+                affectedTokens: invalidateResponse.affectedRows // Số token bị vô hiệu hóa
+            };
+        } catch (error) {
+            throw new Error(error.message || 'Error changing password');
         }
     }
 };
