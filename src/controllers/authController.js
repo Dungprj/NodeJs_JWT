@@ -50,10 +50,10 @@ const authController = {
                         roles: [
                             {
                                 roleId: data.user.roleId,
-                                roleName: data.user.roleName
+                                roleName: data.user.roleName,
 
                                 //khong tra ve list permission nua
-                                // permissions: mergedObject
+                                permissions: mergedObject
                                 // permissions: {
                                 //     salePermission: true,
                                 //     partiesPermission: true,
