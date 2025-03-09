@@ -5,7 +5,14 @@ const ms = require('ms');
 const catchAsync = require('../utils/catchAsync');
 const durationInMs = ms(process.env.JWT_REFRESH_EXPIRE);
 
+const { Sequelize } = require('sequelize');
+
 const User = require('../db/models/user');
+const Token = require('../db/models/token');
+const RolePermission = require('../db/models/rolepermissions');
+const Role = require('../db/models/roles');
+const Permission = require('../db/models/permissions');
+
 const AppError = require('../utils/appError');
 const { json } = require('express');
 
@@ -113,71 +120,108 @@ const authService = {
     handleLoginService: async (email, password) => {
         try {
             //kiem tra user co ton tai hay chua
-            const queryCheckExits = `SELECT * FROM users WHERE email = ?`;
-            const [user] = await pool.query(queryCheckExits, [email]);
+            //kiem tra co ton tai khong
+            const isExistUser = await User.findOne({
+                where: {
+                    email: email
+                }
+            });
 
             //neu user khong ton tai
-            if (user.length < 0) {
-                throw new Error(
-                    'Invalid email or password khong ton tai email'
-                );
+            if (!isExistUser) {
+                throw new AppError('Email not exists', 400);
             }
 
-            const isMatch = await bcrypt.compare(password, user[0].password);
+            const isMatch = await bcrypt.compare(
+                password,
+                isExistUser.password
+            );
             if (!isMatch) {
-                throw new Error('Invalid email or password');
+                throw new AppError('Invalid email or password');
             }
 
-            const accessToken = authService.generateAccessToken(user[0]);
-            const refreshToken = authService.generateRefreshToken(user[0]);
+            const accessToken = authService.generateAccessToken(isExistUser);
+            const refreshToken = authService.generateRefreshToken(isExistUser);
 
-            const expiresAt = getExpiresAtFromDuration(
+            const refreshExpireAt = getExpiresAtFromDuration(
                 process.env.JWT_REFRESH_EXPIRE
             );
 
-            const queryInsertToken = `INSERT INTO Token (userId, refreshToken, expireAt,isValid) VALUES (?, ?, ?,?)`;
-            const [response] = await pool.execute(queryInsertToken, [
-                user[0].id,
-                refreshToken,
-                expiresAt,
-                true
-            ]);
-
-            if (response.affectedRows < 0) {
-                throw new Error('Error insert token');
-            }
-
-            // Truy vấn database để lấy danh sách quyền dựa trên idRole
-            const [permissions] = await pool.query(
-                `SELECT p.name 
-                 FROM permissions p
-                 JOIN role_has_permissions rp ON p.id = rp.permission_id
-                 JOIN roles r ON r.id = rp.role_id 
-                 WHERE r.name = ?`,
-                [user[0].type]
+            const accessExpireAt = getExpiresAtFromDuration(
+                process.env.JWT_ACCESS_EXPIRE
             );
 
-            const queryGetRoleId = `SELECT DISTINCT r.id 
-                                FROM roles r
-                                JOIN users u ON r.name = u.type
-                                WHERE r.name = ?;`;
-            const [roleId] = await pool.query(queryGetRoleId, [user[0].type]);
+            //them token moi
+
+            // const responseInsertToken = await Token.create({
+            //     userId: isExistUser.id,
+            //     refreshToken: refreshToken,
+            //     accessToken: accessToken,
+            //     refreshExpireAt: refreshExpireAt,
+            //     accessExpireAt: accessExpireAt,
+            //     isValid: true,
+            //     createdAt: null,
+            //     updatedAt: null
+            // });
+            // if (!responseInsertToken) {
+            //     throw new AppError('Error insert token');
+            // }
+
+            // Truy vấn database để lấy danh sách quyền dựa trên idRole
+            // const permissions = await Promise.all([
+            //     Permission.findAll({
+            //         attributes: ['name'],
+            //         include: [
+            //             {
+            //                 model: Role,
+            //                 attributes: [],
+            //                 through: {
+            //                     model: RolePermission,
+            //                     attributes: []
+            //                 },
+            //                 where: {
+            //                     name: isExistUser.type
+            //                 }
+            //             }
+            //         ],
+            //         raw: true
+            //     })
+            // ]);
+
+            // const roleId = await Role.findAll({
+            //     attributes: ['id'], // Chỉ lấy cột id từ roles
+            //     include: [
+            //         {
+            //             model: User, // Join với bảng Users
+            //             attributes: [], // Không lấy cột nào từ Users
+            //             where: {
+            //                 type: Sequelize.col('roles.name') // Điều kiện join: r.name = u.type
+            //             }
+            //         }
+            //     ],
+            //     where: {
+            //         name: isExistUser.type // Điều kiện lọc theo r.name
+            //     },
+            //     raw: true, // Trả về kết quả dạng plain object
+            //     distinct: true // Tương ứng với DISTINCT trong SQL
+            // });
 
             return {
                 message: 'Login successful',
-                accessToken,
-                refreshToken,
+                accessToken: '',
+                refreshToken: '',
                 user: {
-                    id: user[0].id,
+                    id: isExistUser.id,
                     email: email,
-                    name: user[0].name,
-                    roleId: roleId[0].id,
-                    roleName: user[0].type
+                    name: isExistUser.name,
+                    roleId: 1,
+                    roleName: isExistUser.type
                 },
-                permissions: permissions.map(per => per.name)
+                // permissions: permissions.map(per => per.name)
+                permissions: []
             };
         } catch (error) {
-            throw new Error(error.message || 'Error logging in');
+            throw new AppError(error.message || 'Error logging in', 400);
         }
     },
 

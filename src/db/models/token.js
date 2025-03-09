@@ -37,19 +37,15 @@ const Token = sequelize.define(
         },
 
         createdAt: {
-            allowNull: false,
+            allowNull: true,
             type: DataTypes.DATE
         },
         updatedAt: {
-            allowNull: false,
-            type: DataTypes.DATE
-        },
-        deletedAt: {
+            allowNull: true,
             type: DataTypes.DATE
         }
     },
     {
-        paranoid: true,
         modelName: 'Token',
         tableName: 'Token', // Chỉ định rõ tên bảng
         timestamps: false, // Tắt tự động quản lý timestamps vì bạn tự quản lý createAt

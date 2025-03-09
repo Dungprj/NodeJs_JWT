@@ -2,36 +2,26 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.createTable('Tokens', {
+        await queryInterface.createTable('roles', {
             id: {
                 allowNull: false,
                 autoIncrement: true,
                 primaryKey: true,
                 type: Sequelize.INTEGER
             },
-            id: {
-                type: Sequelize.INTEGER
-            },
-            userId: {
-                type: Sequelize.INTEGER
-            },
-            refreshToken: {
+            name: {
                 type: Sequelize.STRING
             },
-            accessToken: {
+            created_by: {
+                type: Sequelize.BIGINT,
+                references: {
+                    model: 'User',
+                    key: 'id'
+                }
+                // onDelete: 'CASCADE'
+            },
+            guard_name: {
                 type: Sequelize.STRING
-            },
-            refreshExpireAt: {
-                type: Sequelize.DATE
-            },
-            accessExpireAt: {
-                type: Sequelize.DATE
-            },
-            isValid: {
-                type: Sequelize.INTEGER
-            },
-            createAt: {
-                type: Sequelize.DATE
             },
             createdAt: {
                 allowNull: false,
@@ -44,6 +34,6 @@ module.exports = {
         });
     },
     async down(queryInterface, Sequelize) {
-        await queryInterface.dropTable('Tokens');
+        await queryInterface.dropTable('roles');
     }
 };
