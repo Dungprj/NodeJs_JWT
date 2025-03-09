@@ -2,10 +2,6 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { match } = require('path-to-regexp'); // Đảm bảo rằng path-to-regexp đã được cài đặt
 
-const Role = require('../models/Role');
-const Permissions = require('../models/Permission');
-const RolePermissions = require('../models/RolePermission');
-
 const versionRoute = '/v1';
 const whiteListPaths = ['/', '/register', '/login', '/logout', '/refresh'];
 
@@ -58,6 +54,7 @@ const middleware = {
         // Kiểm tra whitelist
         if (isWhitelisted(req.originalUrl)) {
             console.log('Accessing white list path:', req.originalUrl);
+
             return next();
         }
 

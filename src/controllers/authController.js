@@ -1,37 +1,94 @@
 const authService = require('../services/authService');
 
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
+
 const authController = {
     // Tạo user mới
-    handleRegister: async (req, res) => {
-        try {
-            const { name, email, password } = req.body;
-            const respone = await authService.handleRegisterService(
-                name,
-                email,
-                password
-            );
-            return respone
-                ? res.status(200).json('Create successfully')
-                : res.status(404).json('Create failed');
-        } catch (error) {
-            return res.status(400).json({ message: error.message });
-        }
-    },
+    handleRegister: catchAsync(async (req, res, next) => {
+        const { email, password, confirmPassword } = req.body;
+        const result = await authService.handleRegisterService(
+            email,
+            password,
+            confirmPassword
+        );
+
+        return res.status(201).json({
+            status: 'success',
+            data: result
+        });
+    }),
 
     // Xử lý login (trả refresh token trong body thay vì cookie)
     handleLogin: async (req, res) => {
         try {
             const { email, password } = req.body;
+
             const data = await authService.handleLoginService(email, password);
 
+            // return res.status(200).json({
+            //     message: data.message,
+            //     accessToken: data.accessToken,
+            //     refreshToken: data.refreshToken, // Trả refresh token trong body
+            //     user: data.user,
+            //     permissions:
+            // });
+
+            const dataConvert = data.permissions.map(pers => {
+                return {
+                    [pers]: true
+                };
+            });
+
+            // Gộp mảng thành một object
+            const mergedObject = dataConvert.reduce((result, item) => {
+                return Object.assign(result, item);
+            }, {});
+
+            console.log('list', dataConvert);
+
             return res.status(200).json({
-                message: data.message,
-                accessToken: data.accessToken,
-                refreshToken: data.refreshToken, // Trả refresh token trong body
-                user: data.user
+                status: 'success',
+                message: 'Đăng nhập thành công',
+                data: {
+                    token: data.accessToken,
+                    refreshToken: data.refreshToken,
+                    user: {
+                        email: email,
+                        userTitle: data.user.name,
+                        databaseId: data.user.id,
+                        roles: [
+                            {
+                                roleId: data.user.roleId,
+                                roleName: data.user.roleName
+
+                                //khong tra ve list permission nua
+                                // permissions: mergedObject
+                                // permissions: {
+                                //     salePermission: true,
+                                //     partiesPermission: true,
+                                //     purchasePermission: true,
+                                //     productPermission: true,
+                                //     profileEditPermission: false,
+                                //     addExpensePermission: false,
+                                //     lossProfitPermission: false,
+                                //     dueListPermission: false,
+                                //     stockPermission: false,
+                                //     reportsPermission: false,
+                                //     salesListPermission: false,
+                                //     purchaseListPermission: false
+                                // }
+                            }
+                        ]
+                    }
+                }
             });
         } catch (error) {
-            return res.status(500).json({ message: error.message });
+            return res.status(500).json({
+                status: error.message,
+                message: 'Email hoặc mật khẩu không đúng',
+                data: null
+            });
         }
     },
 

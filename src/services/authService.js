@@ -1,13 +1,15 @@
-const Role = require('../models/Role');
-const User = require('../models/User');
-const Token = require('../models/Token');
-
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
 
 const ms = require('ms');
+const catchAsync = require('../utils/catchAsync');
 const durationInMs = ms(process.env.JWT_REFRESH_EXPIRE);
+
+const User = require('../db/models/user');
+const AppError = require('../utils/appError');
+const { json } = require('express');
+
+require('dotenv').config();
 
 // Hàm tính thời gian hết hạn (expiresAt) dựa trên giá trị từ .env
 const getExpiresAtFromDuration = duration => {
@@ -37,75 +39,142 @@ const parseDurationToMilliseconds = duration => {
 };
 
 const authService = {
-    handleRegisterService: async (name, email, password) => {
-        try {
-            // Kiểm tra email đã tồn tại chưa
-            const existingUser = await User.findOne({ where: { email } });
-            if (existingUser) {
-                throw new Error('Email already exists');
+    handleRegisterService: async (
+        email,
+        password,
+        confirmPassword,
+        address = 'ha noi',
+        email_verified_at = null,
+        avatar = null,
+        parent_id = 1,
+        type = 'Owner',
+        branch_id = 0,
+        cash_register_id = 0,
+        lang = 'vi',
+        mode = 'light',
+        plan_id = 1,
+        plan_expire_date = null,
+        plan_requests = 0,
+        is_active = 0,
+        user_status = 0,
+        remember_token = null,
+        created_at = null,
+        updated_at = null,
+        last_login_at = null
+    ) => {
+        //kiem tra co ton tai khong
+        const isExistUser = await User.findOne({
+            where: {
+                email: email
             }
+        });
 
-            // Mã hóa mật khẩu
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(password, salt);
-
-            // Tạo người dùng mới
-            const newUser = await User.create({
-                name,
-                email,
-                password: hashedPassword,
-                idRole: 3 // Bạn có thể thay đổi ID vai trò nếu cần
-            });
-
-            return newUser ? true : false;
-        } catch (err) {
-            throw new Error(err.message || 'Error creating user');
+        if (isExistUser) {
+            throw new AppError('Email already exists', 400);
         }
-    },
 
+        const newUser = await User.create({
+            email: email,
+            password: password,
+            confirmPassword: confirmPassword,
+            name: '',
+            address: address,
+            email_verified_at: email_verified_at,
+            avatar: avatar,
+            parent_id: parent_id,
+            type: type,
+            branch_id: branch_id,
+            cash_register_id: cash_register_id,
+            lang: lang,
+            mode: mode,
+            plan_id: plan_id,
+            plan_expire_date: plan_expire_date,
+            plan_requests: plan_requests,
+            is_active: is_active,
+            user_status: user_status,
+            remember_token: remember_token,
+            created_at: created_at,
+            updated_at: updated_at,
+            last_login_at: last_login_at
+        });
+
+        if (!newUser) {
+            return new AppError('Failed to create this user', 400);
+        }
+
+        const result = newUser.toJSON();
+
+        delete result.password;
+        delete result.deletedAt;
+
+        // Trả về response
+        return result;
+    },
     handleLoginService: async (email, password) => {
         try {
-            // Kiểm tra người dùng có tồn tại không
-            const user = await User.findOne({ where: { email } });
+            //kiem tra user co ton tai hay chua
+            const queryCheckExits = `SELECT * FROM users WHERE email = ?`;
+            const [user] = await pool.query(queryCheckExits, [email]);
 
-            if (!user) {
-                throw new Error('Invalid email or password');
+            //neu user khong ton tai
+            if (user.length < 0) {
+                throw new Error(
+                    'Invalid email or password khong ton tai email'
+                );
             }
 
-            // So sánh mật khẩu
-            const isMatch = await bcrypt.compare(password, user.password);
+            const isMatch = await bcrypt.compare(password, user[0].password);
             if (!isMatch) {
                 throw new Error('Invalid email or password');
             }
 
-            const accessToken = authService.generateAccessToken(user);
-            const refreshToken = authService.generateRefreshToken(user);
+            const accessToken = authService.generateAccessToken(user[0]);
+            const refreshToken = authService.generateRefreshToken(user[0]);
 
             const expiresAt = getExpiresAtFromDuration(
                 process.env.JWT_REFRESH_EXPIRE
             );
 
-            // Lưu refresh token vào bảng Token
-            const newToken = await Token.create({
-                userId: user.id,
+            const queryInsertToken = `INSERT INTO Token (userId, refreshToken, expireAt,isValid) VALUES (?, ?, ?,?)`;
+            const [response] = await pool.execute(queryInsertToken, [
+                user[0].id,
                 refreshToken,
                 expiresAt,
-                isValid: true
-            });
+                true
+            ]);
 
-            // Lấy tên vai trò của người dùng
-            const role = await Role.findByPk(user.idRole);
+            if (response.affectedRows < 0) {
+                throw new Error('Error insert token');
+            }
+
+            // Truy vấn database để lấy danh sách quyền dựa trên idRole
+            const [permissions] = await pool.query(
+                `SELECT p.name 
+                 FROM permissions p
+                 JOIN role_has_permissions rp ON p.id = rp.permission_id
+                 JOIN roles r ON r.id = rp.role_id 
+                 WHERE r.name = ?`,
+                [user[0].type]
+            );
+
+            const queryGetRoleId = `SELECT DISTINCT r.id 
+                                FROM roles r
+                                JOIN users u ON r.name = u.type
+                                WHERE r.name = ?;`;
+            const [roleId] = await pool.query(queryGetRoleId, [user[0].type]);
 
             return {
                 message: 'Login successful',
                 accessToken,
                 refreshToken,
                 user: {
-                    id: user.id,
-                    email: user.email,
-                    idRole: user.idRole,
-                    roleName: role ? role.name : 'Unknown'
-                }
+                    id: user[0].id,
+                    email: email,
+                    name: user[0].name,
+                    roleId: roleId[0].id,
+                    roleName: user[0].type
+                },
+                permissions: permissions.map(per => per.name)
             };
         } catch (error) {
             throw new Error(error.message || 'Error logging in');
@@ -121,9 +190,11 @@ const authService = {
             throw new Error('JWT_ACCESS_EXPIRE is not defined');
         }
         return jwt.sign(
-            { id: user.id, idRole: user.idRole }, // Sử dụng idRole thay vì role
+            { id: user.id, type: user.type },
             process.env.JWT_ACCESS_SECRET,
-            { expiresIn: process.env.JWT_ACCESS_EXPIRE }
+            {
+                expiresIn: process.env.JWT_ACCESS_EXPIRE
+            }
         );
     },
 
@@ -136,12 +207,13 @@ const authService = {
             throw new Error('JWT_REFRESH_EXPIRE is not defined');
         }
         return jwt.sign(
-            { id: user.id, idRole: user.idRole }, // Sử dụng idRole thay vì role
+            { id: user.id, type: user.type },
             process.env.JWT_REFRESH_SECRET,
-            { expiresIn: process.env.JWT_REFRESH_EXPIRE }
+            {
+                expiresIn: process.env.JWT_REFRESH_EXPIRE
+            }
         );
     },
-
     refreshTokenService: async refreshToken => {
         try {
             if (!refreshToken) {
@@ -152,17 +224,22 @@ const authService = {
                 throw new Error('JWT_REFRESH_SECRET is not defined');
             }
 
-            // Kiểm tra refresh token trong bảng Token
-            const tokenRecord = await Token.findOne({
-                where: { refreshToken }
-            });
+            const queryGetTokenByRefreshToken = `SELECT * FROM Token WHERE refreshToken = ?`;
+            const [tokenRecord] = await pool.execute(
+                queryGetTokenByRefreshToken,
+                [refreshToken]
+            );
+
+            if (tokenRecord.length < 0) {
+                throw new Error('Invalid or expired refresh token');
+            }
 
             if (
-                !tokenRecord ||
-                !tokenRecord.isValid ||
-                tokenRecord.expiresAt < new Date()
+                !tokenRecord[0] ||
+                !tokenRecord[0].isValid ||
+                tokenRecord[0].expiresAt < new Date()
             ) {
-                throw new Error('Invalid or expired refresh token');
+                throw new Error('Invalid or expired refresh token 2');
             }
 
             const decoded = jwt.verify(
@@ -170,28 +247,31 @@ const authService = {
                 process.env.JWT_REFRESH_SECRET
             );
 
-            // Lấy thông tin người dùng từ decoded
-            const user = await User.findByPk(decoded.id);
+            //get user by decodeid
+            const queryGetUserById = `SELECT * FROM users WHERE id = ?`;
+            const [user] = await pool.execute(queryGetUserById, [decoded.id]);
 
-            if (!user) {
+            if (!user || user.length < 0) {
                 throw new Error('User not found');
             }
 
-            const newAccessToken = authService.generateAccessToken(user);
-            const newRefreshToken = authService.generateRefreshToken(user);
+            const newAccessToken = authService.generateAccessToken(user[0]);
+            const newRefreshToken = authService.generateRefreshToken(user[0]);
 
             const expiresAt = getExpiresAtFromDuration(
                 process.env.JWT_REFRESH_EXPIRE
             );
 
-            // Cập nhật refresh token trong bảng Token
-            await tokenRecord.update({
-                refreshToken: newRefreshToken,
+            //tim va update token refresh
+            const queryUpdateToken = `UPDATE Token SET refreshToken = ?, expireAt = ?, isValid = ? WHERE refreshToken = ?`;
+            const [response] = await pool.execute(queryUpdateToken, [
+                newRefreshToken,
                 expiresAt,
-                isValid: true
-            });
-
+                true,
+                refreshToken
+            ]);
             return {
+                user: user[0],
                 accessToken: newAccessToken,
                 refreshToken: newRefreshToken
             };
@@ -202,20 +282,7 @@ const authService = {
 
     invalidateTokenService: async refreshToken => {
         try {
-            if (!refreshToken) {
-                throw new Error('No refresh token provided');
-            }
-
-            // Cập nhật token là không hợp lệ trong bảng Token
-            const tokenRecord = await Token.findOne({
-                where: { refreshToken }
-            });
-
-            if (tokenRecord) {
-                await tokenRecord.update({ isValid: false });
-            }
-
-            return true;
+            await Token.findOneAndUpdate({ refreshToken }, { isValid: false });
         } catch (error) {
             throw new Error('Error invalidating token');
         }
