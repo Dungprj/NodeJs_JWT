@@ -32,8 +32,15 @@ const Token = sequelize.define(
             type: DataTypes.DATE
         },
 
-        isValid: {
-            type: DataTypes.INTEGER
+        refreshIsValid: {
+            allowNull: false,
+            type: DataTypes.INTEGER,
+            defaultValue: 1
+        },
+        accessIsValid: {
+            allowNull: false,
+            type: DataTypes.INTEGER,
+            defaultValue: 1
         },
 
         createdAt: {
@@ -46,10 +53,11 @@ const Token = sequelize.define(
         }
     },
     {
+        freezeTableName: true,
         modelName: 'Token',
         tableName: 'Token', // Chỉ định rõ tên bảng
         timestamps: false, // Tắt tự động quản lý timestamps vì bạn tự quản lý createAt
-        underscored: true // Giữ nguyên tên cột có dấu gạch dưới (ví dụ: userId, refreshToken)
+        underscored: false // Giữ nguyên tên cột có dấu gạch dưới (ví dụ: userId, refreshToken)
     }
 );
 

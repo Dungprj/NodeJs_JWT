@@ -21,11 +21,11 @@ const Permission = sequelize.define(
         guard_name: {
             type: DataTypes.STRING
         },
-        createdAt: {
+        created_at: {
             allowNull: false,
             type: DataTypes.DATE
         },
-        updatedAt: {
+        updated_at: {
             allowNull: false,
             type: DataTypes.DATE
         }
@@ -38,13 +38,11 @@ const Permission = sequelize.define(
     }
 );
 
-Permission.associate = models => {
-    Permission.belongsToMany(Role, {
-        through: 'role_has_permissions', // Tên bảng trung gian
-        foreignKey: 'permission_id', // Khóa ngoại trong bảng role_permissions trỏ đến Permissions
-        otherKey: 'role_id', // Khóa ngoại trỏ đến Roles
-        as: 'roles' // Tên alias cho quan hệ (tùy chọn)
-    });
-};
+Permission.belongsToMany(Role, {
+    through: 'role_has_permissions', // Tên bảng trung gian
+    foreignKey: 'permission_id', // Khóa ngoại trong bảng role_permissions trỏ đến Permissions
+    otherKey: 'role_id', // Khóa ngoại trỏ đến Roles
+    as: 'Permission_roles' // Tên alias cho quan hệ (tùy chọn)
+});
 
 module.exports = Permission;

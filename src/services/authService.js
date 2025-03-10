@@ -15,6 +15,7 @@ const Permission = require('../db/models/permissions');
 
 const AppError = require('../utils/appError');
 const { json } = require('express');
+const commom = require('../common/common');
 
 require('dotenv').config();
 
@@ -137,7 +138,7 @@ const authService = {
                 isExistUser.password
             );
             if (!isMatch) {
-                throw new AppError('Invalid email or password');
+                throw new AppError('Invalid email or password', 400);
             }
 
             const accessToken = authService.generateAccessToken(isExistUser);
@@ -153,72 +154,49 @@ const authService = {
 
             //them token moi
 
-            // const responseInsertToken = await Token.create({
-            //     userId: isExistUser.id,
-            //     refreshToken: refreshToken,
-            //     accessToken: accessToken,
-            //     refreshExpireAt: refreshExpireAt,
-            //     accessExpireAt: accessExpireAt,
-            //     isValid: true,
-            //     createdAt: null,
-            //     updatedAt: null
-            // });
-            // if (!responseInsertToken) {
-            //     throw new AppError('Error insert token');
-            // }
+            const responseInsertToken = await Token.create({
+                userId: isExistUser.id,
+                refreshToken: refreshToken,
+                accessToken: accessToken,
+                refreshExpireAt: refreshExpireAt,
+                accessExpireAt: accessExpireAt,
+                isValid: true,
+                createdAt: new Date(),
+                updatedAt: null
+            });
+            if (!responseInsertToken) {
+                throw new AppError('Error insert token', 400);
+            }
 
-            // Truy vấn database để lấy danh sách quyền dựa trên idRole
-            // const permissions = await Promise.all([
-            //     Permission.findAll({
-            //         attributes: ['name'],
-            //         include: [
-            //             {
-            //                 model: Role,
-            //                 attributes: [],
-            //                 through: {
-            //                     model: RolePermission,
-            //                     attributes: []
-            //                 },
-            //                 where: {
-            //                     name: isExistUser.type
-            //                 }
-            //             }
-            //         ],
-            //         raw: true
-            //     })
-            // ]);
+            //Truy vấn database để lấy danh sách quyền dựa trên idRole
+            const permissions = await commom.getListPermission(isExistUser);
 
-            // const roleId = await Role.findAll({
-            //     attributes: ['id'], // Chỉ lấy cột id từ roles
-            //     include: [
-            //         {
-            //             model: User, // Join với bảng Users
-            //             attributes: [], // Không lấy cột nào từ Users
-            //             where: {
-            //                 type: Sequelize.col('roles.name') // Điều kiện join: r.name = u.type
-            //             }
-            //         }
-            //     ],
-            //     where: {
-            //         name: isExistUser.type // Điều kiện lọc theo r.name
-            //     },
-            //     raw: true, // Trả về kết quả dạng plain object
-            //     distinct: true // Tương ứng với DISTINCT trong SQL
-            // });
+            const [roleId] = await Promise.all([
+                Role.findAll({
+                    attributes: ['id'],
+                    include: {
+                        model: User,
+                        attributes: [],
+                        as: 'Role_user'
+                    },
+                    where: {
+                        name: 'Owner'
+                    }
+                })
+            ]);
 
             return {
                 message: 'Login successful',
-                accessToken: '',
-                refreshToken: '',
+                accessToken: accessToken,
+                refreshToken: refreshToken,
                 user: {
                     id: isExistUser.id,
                     email: email,
                     name: isExistUser.name,
-                    roleId: 1,
+                    roleId: roleId[0].id,
                     roleName: isExistUser.type
                 },
-                // permissions: permissions.map(per => per.name)
-                permissions: []
+                permissions: permissions[0]
             };
         } catch (error) {
             throw new AppError(error.message || 'Error logging in', 400);
@@ -245,10 +223,10 @@ const authService = {
     // Tạo refresh token
     generateRefreshToken: user => {
         if (!process.env.JWT_REFRESH_SECRET) {
-            throw new Error('JWT_REFRESH_SECRET is not defined');
+            throw new AppError('JWT_REFRESH_SECRET is not defined', 400);
         }
         if (!process.env.JWT_REFRESH_EXPIRE) {
-            throw new Error('JWT_REFRESH_EXPIRE is not defined');
+            throw new AppError('JWT_REFRESH_EXPIRE is not defined', 400);
         }
         return jwt.sign(
             { id: user.id, type: user.type },
@@ -258,78 +236,244 @@ const authService = {
             }
         );
     },
-    refreshTokenService: async refreshToken => {
-        try {
-            if (!refreshToken) {
-                throw new Error('No refresh token provided');
-            }
-
-            if (!process.env.JWT_REFRESH_SECRET) {
-                throw new Error('JWT_REFRESH_SECRET is not defined');
-            }
-
-            const queryGetTokenByRefreshToken = `SELECT * FROM Token WHERE refreshToken = ?`;
-            const [tokenRecord] = await pool.execute(
-                queryGetTokenByRefreshToken,
-                [refreshToken]
-            );
-
-            if (tokenRecord.length < 0) {
-                throw new Error('Invalid or expired refresh token');
-            }
-
-            if (
-                !tokenRecord[0] ||
-                !tokenRecord[0].isValid ||
-                tokenRecord[0].expiresAt < new Date()
-            ) {
-                throw new Error('Invalid or expired refresh token 2');
-            }
-
-            const decoded = jwt.verify(
-                refreshToken,
-                process.env.JWT_REFRESH_SECRET
-            );
-
-            //get user by decodeid
-            const queryGetUserById = `SELECT * FROM users WHERE id = ?`;
-            const [user] = await pool.execute(queryGetUserById, [decoded.id]);
-
-            if (!user || user.length < 0) {
-                throw new Error('User not found');
-            }
-
-            const newAccessToken = authService.generateAccessToken(user[0]);
-            const newRefreshToken = authService.generateRefreshToken(user[0]);
-
-            const expiresAt = getExpiresAtFromDuration(
-                process.env.JWT_REFRESH_EXPIRE
-            );
-
-            //tim va update token refresh
-            const queryUpdateToken = `UPDATE Token SET refreshToken = ?, expireAt = ?, isValid = ? WHERE refreshToken = ?`;
-            const [response] = await pool.execute(queryUpdateToken, [
-                newRefreshToken,
-                expiresAt,
-                true,
-                refreshToken
-            ]);
-            return {
-                user: user[0],
-                accessToken: newAccessToken,
-                refreshToken: newRefreshToken
-            };
-        } catch (error) {
-            throw new Error(error.message || 'Invalid refresh token');
+    refreshTokenService: async (refreshToken, accessToken) => {
+        if (!refreshToken) {
+            throw new AppError('No refresh token provided', 400);
         }
+
+        if (!process.env.JWT_REFRESH_SECRET) {
+            throw new AppError('JWT_REFRESH_SECRET is not defined', 400);
+        }
+
+        const refreshTokenRecord = await Token.findOne({
+            where: { refreshToken: refreshToken }
+        });
+        if (!refreshTokenRecord) {
+            throw new AppError('Invalid refresh token', 500);
+        }
+
+        const accessTokenRecord = await Token.findOne({
+            where: { accessToken: accessToken }
+        });
+        if (!accessTokenRecord) {
+            throw new AppError('Invalid or expired accessToken token', 400);
+        }
+
+        if (!refreshTokenRecord) {
+            throw new AppError('Invalid or expired refresh token', 400);
+        }
+
+        if (!refreshTokenRecord.refreshIsValid) {
+            throw new AppError('Refresh token has been invalidated', 400);
+        }
+        if (refreshTokenRecord.refreshExpireAt < new Date()) {
+            throw new AppError('Refresh token has expired', 400);
+        }
+
+        const decoded = jwt.verify(
+            refreshToken,
+            process.env.JWT_REFRESH_SECRET
+        );
+
+        //get user by decodeid
+
+        const User_Decode = await User.findOne({
+            where: {
+                id: decoded.id,
+                type: decoded.type
+            }
+        });
+
+        if (!User_Decode) {
+            throw new AppError('User not found', 400);
+        }
+
+        const newAccessToken = authService.generateAccessToken(User_Decode);
+        const newRefreshToken = authService.generateRefreshToken(User_Decode);
+
+        //expireRefreshToken
+        const refreshExpireAt = getExpiresAtFromDuration(
+            process.env.JWT_REFRESH_EXPIRE
+        );
+
+        //expireAccessToken
+        const accessExpireAt = getExpiresAtFromDuration(
+            process.env.JWT_ACCESS_EXPIRE
+        );
+
+        //tim va update token refresh
+        const [response] = await Token.update(
+            {
+                refreshToken: newRefreshToken, // Giá trị mới cho refreshToken
+                accessToken: newAccessToken,
+                refreshExpireAt: refreshExpireAt,
+                accessExpireAt: accessExpireAt, // Giá trị mới cho expireAt
+                accessIsValid: true,
+                refreshIsValid: true
+            },
+            {
+                where: {
+                    refreshToken: refreshToken, // Điều kiện WHERE
+                    accessToken: accessToken
+                }
+            }
+        );
+
+        if (!response) {
+            throw new AppError('Error update token', 400);
+        }
+
+        return {
+            user: User_Decode,
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken
+        };
     },
 
-    invalidateTokenService: async refreshToken => {
-        try {
-            await Token.findOneAndUpdate({ refreshToken }, { isValid: false });
-        } catch (error) {
-            throw new Error('Error invalidating token');
+    disableRefreshTokenService: async refreshToken => {
+        //kiem tra xem token da disable chua
+
+        const isTokenExist = await Token.findOne({
+            where: {
+                refreshToken: refreshToken
+            }
+        });
+
+        if (!isTokenExist) {
+            throw new AppError('Refresh token is not exist', 400);
         }
+
+        if (!isTokenExist.refreshIsValid) {
+            throw new AppError('Refresh token is  already disabled', 400);
+        }
+
+        const response = await Token.update(
+            {
+                refreshIsValid: false
+            },
+            {
+                where: {
+                    refreshToken: refreshToken
+                }
+            }
+        );
+
+        if (!response) {
+            throw new AppError('Error disable refresh token', 400);
+        }
+    },
+    disableAccessTokenService: async accessToken => {
+        const isTokenExist = await Token.findOne({
+            where: {
+                accessToken: accessToken
+            }
+        });
+
+        if (!isTokenExist) {
+            throw new AppError('accessToken is not exist', 400);
+        }
+
+        if (!isTokenExist.accessIsValid) {
+            throw new AppError('accessToken is  already disabled', 400);
+        }
+
+        const response = await Token.update(
+            {
+                accessIsValid: false
+            },
+            {
+                where: {
+                    accessToken: accessToken
+                }
+            }
+        );
+
+        if (!response) {
+            throw new AppError('Error disable access token', 400);
+        }
+    },
+    disableBothTokenService: async (refreshToken, accessToken) => {
+        const statusRefreshToken = false;
+        const statusAccessToken = false;
+
+        const isDisabled = await Token.findOne({
+            where: {
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+                accessIsValid: false,
+                refreshIsValid: false
+            }
+        });
+
+        if (isDisabled) {
+            throw new AppError(
+                'accessToken and refreshToken is already disabled',
+                400
+            );
+        }
+
+        const response = await authService.invalidateTokenService(
+            refreshToken,
+            statusRefreshToken,
+            accessToken,
+            statusAccessToken
+        );
+
+        if (!response) {
+            throw new AppError('Error logout token', 400);
+        }
+    },
+    LogoutService: async (refreshToken, accessToken) => {
+        const statusRefreshToken = false;
+        const statusAccessToken = false;
+
+        const response = await authService.invalidateTokenService(
+            refreshToken,
+            statusRefreshToken,
+            accessToken,
+            statusAccessToken
+        );
+
+        if (!response) {
+            throw new AppError('Error logout token', 400);
+        }
+    },
+    invalidateTokenService: async (
+        refreshToken,
+        statusRefreshToken,
+        accessToken,
+        statusAccessToken
+    ) => {
+        if (!refreshToken) {
+            throw new AppError('No refresh token provided', 400);
+        }
+        if (statusRefreshToken == null || statusRefreshToken == undefined) {
+            throw new AppError('No statusRefreshToken provided', 400);
+        }
+        if (!accessToken) {
+            throw new AppError('No accessToken provided', 400);
+        }
+        if (statusAccessToken == null || statusAccessToken == undefined) {
+            throw new AppError('No statusAccessToken provided', 400);
+        }
+        const response = await Token.update(
+            {
+                refreshIsValid: statusRefreshToken,
+                accessIsValid: statusAccessToken
+            },
+            {
+                where: {
+                    refreshToken: refreshToken, // Tìm theo refreshToken
+                    accessToken: accessToken // Tìm theo accessToken
+                }
+            }
+        );
+
+        if (!response) {
+            throw new AppError('Error update token', 400);
+        }
+
+        return true;
     }
 };
 

@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 
 const sequelize = require('../../config/database');
 const AppError = require('../../utils/appError');
+const Role = require('./roles');
 
 const User = sequelize.define(
     'User',
@@ -153,6 +154,16 @@ User.hasMany(Token, { foreignKey: 'userId' }); //khi báo 1 user có nhiều tok
 Token.belongsTo(User, {
     foreignKey: 'userId',
     as: 'userToken'
+});
+
+//foreignKey là của bảng Role
+User.hasMany(Role, { foreignKey: 'name' }); //khi báo 1 user có nhiều token , quan hệ 1 nhiều
+
+//khai báo ngược lại mỗi Role thuộc về một user (quan hệ nhiều 1)
+//foreignKey là của bảng Role
+Role.belongsTo(User, {
+    foreignKey: 'name',
+    as: 'Role_user'
 });
 
 module.exports = User;

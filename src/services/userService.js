@@ -1,20 +1,22 @@
 require('dotenv').config();
 
+const User = require('../db/models/user');
+const Token = require('../db/models/token');
+const RolePermission = require('../db/models/rolepermissions');
+const Role = require('../db/models/roles');
+const Permission = require('../db/models/permissions');
+const AppError = require('../utils/appError');
+
 const userService = {
     // Lấy danh sách tất cả người dùng
     getListUserService: async (page = 1, limit = 10) => {
-        try {
-            const query = 'SELECT * FROM users';
-            const [users, fields] = await pool.query(query);
-            return users;
-        } catch (error) {
-            console.log('Error in getListUserService:', error);
-            return {
-                success: false,
-                message: 'Failed to fetch users',
-                error: error.message
-            };
+        const users = await User.findAll();
+
+        if (!users) {
+            throw new AppError('List User not found');
         }
+
+        return users;
     },
 
     // Xóa người dùng theo id và xóa token liên quan
@@ -31,13 +33,9 @@ const userService = {
 
     // Lấy thông tin người dùng theo id
     getUserByIdService: async id => {
-        try {
-            const query = 'SELECT * FROM users where id = ?';
-            const [user] = await pool.query(query, [id]);
-            return user;
-        } catch (error) {
-            throw new Error(error.message);
-        }
+        const user = await User.findByPk(id);
+
+        return user;
     },
 
     // Cập nhật thông tin người dùng

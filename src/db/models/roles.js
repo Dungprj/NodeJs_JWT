@@ -3,7 +3,7 @@ const { DataTypes } = require('sequelize');
 
 const sequelize = require('../../config/database');
 const AppError = require('../../utils/appError');
-
+const User = require('./user');
 const Role = sequelize.define(
     'Role',
     {
@@ -27,11 +27,11 @@ const Role = sequelize.define(
         guard_name: {
             type: DataTypes.STRING
         },
-        createdAt: {
+        created_at: {
             allowNull: false,
             type: DataTypes.DATE
         },
-        updatedAt: {
+        updated_at: {
             allowNull: false,
             type: DataTypes.DATE
         }

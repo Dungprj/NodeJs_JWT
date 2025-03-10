@@ -27,8 +27,11 @@ module.exports = {
             accessExpireAt: {
                 type: Sequelize.DATE
             },
-            isValid: {
-                type: Sequelize.INTEGER
+            refreshIsValid: {
+                type: DataTypes.INTEGER
+            },
+            accessIsValid: {
+                type: DataTypes.INTEGER
             },
             createAt: {
                 type: Sequelize.DATE

@@ -1,7 +1,10 @@
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
+
 const userService = require('../services/userService');
 
 const userController = {
-    getListUser: async (req, res) => {
+    getListUser: catchAsync(async (req, res) => {
         // Lấy page và limit từ query params, mặc định là page=1, limit=10
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
@@ -9,7 +12,7 @@ const userController = {
         // Gọi service để lấy danh sách người dùng
         const data = await userService.getListUserService(page, limit);
         return res.status(200).json(data);
-    },
+    }),
     getuserById: async (req, res) => {
         const data = await userService.getUserByIdService(req.params.id);
         return res.status(200).json(data);

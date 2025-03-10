@@ -26,8 +26,9 @@ const authController = {
         const data = await authService.handleLoginService(email, password);
 
         const dataConvert = data.permissions.map(pers => {
+            const key = pers.name;
             return {
-                [pers]: true
+                [key]: true
             };
         });
 
@@ -35,8 +36,6 @@ const authController = {
         const mergedObject = dataConvert.reduce((result, item) => {
             return Object.assign(result, item);
         }, {});
-
-        console.log('list', dataConvert);
 
         return res.status(200).json({
             status: 'success',
@@ -51,10 +50,10 @@ const authController = {
                     roles: [
                         {
                             roleId: data.user.roleId,
-                            roleName: data.user.roleName
+                            roleName: data.user.roleName,
 
                             //khong tra ve list permission nua
-                            // permissions: mergedObject
+                            permissions: mergedObject
                             // permissions: {
                             //     salePermission: true,
                             //     partiesPermission: true,
@@ -77,45 +76,100 @@ const authController = {
     }),
 
     // Yêu cầu refresh token để tạo access token mới (client gửi refresh token trong body)
-    requestRefreshToken: async (req, res) => {
-        try {
-            const { refreshToken } = req.body; // Lấy refresh token từ body thay vì cookie
-            if (!refreshToken) {
-                return res
-                    .status(400)
-                    .json({ message: 'No refresh token provided' });
-            }
+    requestRefreshToken: catchAsync(async (req, res) => {
+        const {
+            refreshToken,
 
-            const data = await authService.refreshTokenService(refreshToken);
+            accessToken
+        } = req.body; // Lấy refresh token từ body thay vì cookie
 
-            return res.status(200).json({
-                message: 'Token refreshed successfully',
-                accessToken: data.accessToken,
-                refreshToken: data.refreshToken // Trả refresh token mới trong body
-            });
-        } catch (error) {
-            return res.status(401).json({ message: error.message });
+        if (!refreshToken) {
+            throw new AppError('No refresh token provided', 400);
         }
-    },
 
-    // Logout: Vô hiệu hóa refresh token (client gửi refresh token trong body)
-    logout: async (req, res) => {
-        try {
-            const { refreshToken } = req.body; // Lấy refresh token từ body
-            if (!refreshToken) {
-                return res
-                    .status(400)
-                    .json({ message: 'No refresh token provided' });
-            }
-
-            // Vô hiệu hóa refresh token trong database
-            await authService.invalidateTokenService(refreshToken);
-
-            return res.status(200).json({ message: 'Logged out successfully' });
-        } catch (error) {
-            return res.status(500).json({ message: error.message });
+        if (!accessToken) {
+            throw new AppError('No accessToken provided', 400);
         }
-    }
+
+        const data = await authService.refreshTokenService(
+            refreshToken,
+            accessToken
+        );
+
+        return res.status(200).json({
+            message: 'Token refreshed successfully',
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken // Trả refresh token mới trong body
+        });
+    }),
+
+    //disableRefreshToken : vô hiệu hóa refresh token
+
+    disableRefreshToken: catchAsync(async (req, res) => {
+        const { refreshToken } = req.body;
+        // Vô hiệu hóa refresh token trong database
+        if (!refreshToken) {
+            throw new AppError('No refresh token provided', 400);
+        }
+
+        await authService.disableRefreshTokenService(refreshToken);
+
+        return res.status(200).json({
+            message: ' refresh token was disabled successfully'
+        });
+    }),
+
+    disableAccessToken: catchAsync(async (req, res) => {
+        const { accessToken } = req.body;
+
+        if (!accessToken) {
+            throw new AppError('No access token provided', 400);
+        }
+
+        // Vô hiệu hóa refresh token trong database
+        await authService.disableAccessTokenService(accessToken);
+
+        return res.status(200).json({
+            message: ' accessToken was disabled successfully'
+        });
+    }),
+
+    disableBothToken: catchAsync(async (req, res) => {
+        const { accessToken, refreshToken } = req.body;
+
+        if (!accessToken) {
+            throw new AppError('No access token provided', 400);
+        }
+        if (!refreshToken) {
+            throw new AppError('No refresh token provided', 400);
+        }
+
+        // Vô hiệu hóa refresh token trong database
+        await authService.disableBothTokenService(refreshToken, accessToken);
+
+        return res.status(200).json({
+            message: ' accessToken and refreshtoken was disabled successfully'
+        });
+    }),
+
+    // Logout: Vô hiệu hóa refresh token  và access token
+    logout: catchAsync(async (req, res) => {
+        const { refreshToken, accessToken } = req.body; // Lấy refresh token từ body
+        if (!refreshToken) {
+            throw new AppError('No refresh token provided', 400);
+        }
+
+        if (!accessToken) {
+            throw new AppError('No accessToken provided', 400);
+        }
+
+        // Vô hiệu hóa refresh token trong database
+        await authService.LogoutService(refreshToken, accessToken);
+
+        return res.status(200).json({
+            message: 'Logged out successfully'
+        });
+    })
 };
 
 module.exports = authController;

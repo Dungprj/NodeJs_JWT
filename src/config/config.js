@@ -9,14 +9,18 @@ module.exports = {
         host: process.env.DB_HOST,
         dialect: process.env.DB_DIALECT,
         port: process.env.DB_PORT,
-        seederStorage: 'sequelize'
+        seederStorage: 'sequelize',
+        timezone: process.env.DB_TIMEZONE
     },
     test: {
-        username: 'root',
-        password: null,
-        database: 'database_test',
-        host: '127.0.0.1',
-        dialect: 'mysql'
+        username: process.env.DB_USERNAME,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        host: process.env.DB_HOST,
+        dialect: process.env.DB_DIALECT,
+        port: process.env.DB_PORT,
+        seederStorage: 'sequelize',
+        timezone: process.env.DB_TIMEZONE
     },
     production: {
         username: process.env.DB_USERNAME,
@@ -24,6 +28,8 @@ module.exports = {
         database: process.env.DB_NAME,
         host: process.env.DB_HOST,
         dialect: process.env.DB_DIALECT,
-        port: process.env.DB_PORT
+        port: process.env.DB_PORT,
+        seederStorage: 'sequelize',
+        timezone: process.env.DB_TIMEZONE
     }
 };

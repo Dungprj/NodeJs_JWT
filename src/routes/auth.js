@@ -7,7 +7,12 @@ const routerAuth = express.Router();
 
 routerAuth.post('/register', authController.handleRegister);
 routerAuth.post('/login', authController.handleLogin);
-routerAuth.post('/logout', authController.logout);
+routerAuth.put('/logout', authController.logout);
 routerAuth.post('/refresh', authController.requestRefreshToken);
+
+//vô hiệu hóa token
+routerAuth.put('/disableRefreshToken', authController.disableRefreshToken);
+routerAuth.put('/disableAccessToken', authController.disableAccessToken);
+routerAuth.put('/disableBothToken', authController.disableBothToken);
 
 module.exports = routerAuth; //export default
