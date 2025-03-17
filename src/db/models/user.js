@@ -172,10 +172,4 @@ Role.belongsTo(User, {
 //khóa ngoại trong bản Unit là created_by
 User.hasMany(Unit, { foreignKey: 'created_by' }); //khi báo 1 user có nhiều token , quan hệ 1 nhiều
 
-//khai báo ngược lại mỗi token thuộc về một user (quan hệ nhiều 1)
-Unit.belongsTo(User, {
-    foreignKey: 'created_by',
-    as: 'userUnit'
-});
-
 module.exports = User;

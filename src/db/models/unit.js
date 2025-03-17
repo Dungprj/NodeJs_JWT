@@ -3,7 +3,7 @@ const { DataTypes, Sequelize } = require('sequelize');
 
 const sequelize = require('../../config/database');
 const AppError = require('../../utils/appError');
-
+const User = require('./user');
 const Unit = sequelize.define(
     'Unit',
     {
@@ -36,9 +36,19 @@ const Unit = sequelize.define(
         freezeTableName: true,
         modelName: 'Unit',
         tableName: 'units', // Chỉ định rõ tên bảng
-        timestamps: false, // Tắt tự động quản lý timestamps vì bạn tự quản lý createAt
+        timestamps: true, // Bật tự động quản lý timestamps
+        createdAt: 'created_at', // Đổi tên cột createdAt mặc định
+        updatedAt: 'updated_at', // Đổi tên cột updatedAt mặc định
         underscored: false // Giữ nguyên tên cột có dấu gạch dưới (ví dụ: userId, refreshToken)
     }
 );
+
+// // Quan hệ với User
+// Unit.belongsTo(User, {
+//     foreignKey: 'created_by',
+//     as: 'creatorbyUser',
+//     onDelete: 'CASCADE',
+//     onUpdate: 'CASCADE'
+// });
 
 module.exports = Unit;
