@@ -5,9 +5,9 @@ const sequelize = require('./config/database');
 const cors = require('cors');
 
 const middleware = require('./middleware/auth');
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/user');
-const globalErrorHandler = require('./controllers/errorController');
+const authRoutes = require('./routes/common/auth');
+const userRoutes = require('./routes/user/userRoute');
+const globalErrorHandler = require('./controllers/common/errorController');
 const AppError = require('./utils/appError');
 
 const app = express();

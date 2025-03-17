@@ -1,13 +1,13 @@
 require('dotenv').config();
 
-const User = require('../db/models/user');
-const Token = require('../db/models/token');
-const RolePermission = require('../db/models/rolepermissions');
-const Role = require('../db/models/roles');
-const Permission = require('../db/models/permissions');
-const AppError = require('../utils/appError');
+const User = require('../../../db/models/user');
+const Token = require('../../../db/models/token');
+const RolePermission = require('../../../db/models/rolepermissions');
+const Role = require('../../../db/models/roles');
+const Permission = require('../../../db/models/permissions');
+const AppError = require('../../../utils/appError');
 
-const userService = {
+const profileService = {
     // Lấy danh sách tất cả người dùng
     getListUserService: async (page = 1, limit = 10) => {
         const users = await User.findAll();
@@ -34,7 +34,9 @@ const userService = {
     // Lấy thông tin người dùng theo id
     getUserByIdService: async id => {
         const user = await User.findByPk(id);
-
+        if (!user) {
+            throw new AppError('User not found', 404);
+        }
         return user;
     },
 
@@ -62,4 +64,4 @@ const userService = {
     }
 };
 
-module.exports = userService;
+module.exports = profileService;

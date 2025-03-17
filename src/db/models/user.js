@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const sequelize = require('../../config/database');
 const AppError = require('../../utils/appError');
 const Role = require('./roles');
+const Unit = require('./unit');
 
 const User = sequelize.define(
     'User',
@@ -112,9 +113,11 @@ const User = sequelize.define(
     },
     {
         sequelize,
+        underscored: true,
         modelName: 'User',
         tableName: 'users', // Chỉ định rõ tên bảng
         timestamps: false, // Tắt tự động quản lý timestamps vì bạn tự quản lý created_at, updated_at
+
         hooks: {
             beforeCreate: async User => {
                 if (User.password.length < 4) {
@@ -164,6 +167,15 @@ User.hasMany(Role, { foreignKey: 'name' }); //khi báo 1 user có nhiều token 
 Role.belongsTo(User, {
     foreignKey: 'name',
     as: 'Role_user'
+});
+
+//khóa ngoại trong bản Unit là created_by
+User.hasMany(Unit, { foreignKey: 'created_by' }); //khi báo 1 user có nhiều token , quan hệ 1 nhiều
+
+//khai báo ngược lại mỗi token thuộc về một user (quan hệ nhiều 1)
+Unit.belongsTo(User, {
+    foreignKey: 'created_by',
+    as: 'userUnit'
 });
 
 module.exports = User;

@@ -2,20 +2,20 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const ms = require('ms');
-const catchAsync = require('../utils/catchAsync');
+const catchAsync = require('../../utils/catchAsync');
 const durationInMs = ms(process.env.JWT_REFRESH_EXPIRE);
 
 const { Sequelize } = require('sequelize');
 
-const User = require('../db/models/user');
-const Token = require('../db/models/token');
-const RolePermission = require('../db/models/rolepermissions');
-const Role = require('../db/models/roles');
-const Permission = require('../db/models/permissions');
+const User = require('../../db/models/user');
+const Token = require('../../db/models/token');
+const RolePermission = require('../../db/models/rolepermissions');
+const Role = require('../../db/models/roles');
+const Permission = require('../../db/models/permissions');
 
-const AppError = require('../utils/appError');
+const AppError = require('../../utils/appError');
 const { json } = require('express');
-const commom = require('../common/common');
+const commom = require('../../common/common');
 
 require('dotenv').config();
 
@@ -78,7 +78,7 @@ const authService = {
         });
 
         if (isExistUser) {
-            throw new AppError('Email already exists', 400);
+            throw new AppError('Email already exists', 409);
         }
 
         const newUser = await User.create({
@@ -130,7 +130,7 @@ const authService = {
 
             //neu user khong ton tai
             if (!isExistUser) {
-                throw new AppError('Email not exists', 400);
+                throw new AppError('Email not exists', 404);
             }
 
             const isMatch = await bcrypt.compare(
@@ -138,7 +138,7 @@ const authService = {
                 isExistUser.password
             );
             if (!isMatch) {
-                throw new AppError('Invalid email or password', 400);
+                throw new AppError('Invalid email or password', 404);
             }
 
             const accessToken = authService.generateAccessToken(isExistUser);
@@ -206,10 +206,10 @@ const authService = {
     // Tạo access token
     generateAccessToken: user => {
         if (!process.env.JWT_ACCESS_SECRET) {
-            throw new Error('JWT_ACCESS_SECRET is not defined');
+            throw new AppError('JWT_ACCESS_SECRET is not defined', 404);
         }
         if (!process.env.JWT_ACCESS_EXPIRE) {
-            throw new Error('JWT_ACCESS_EXPIRE is not defined');
+            throw new AppError('JWT_ACCESS_EXPIRE is not defined', 404);
         }
         return jwt.sign(
             { id: user.id, type: user.type },
@@ -249,7 +249,7 @@ const authService = {
             where: { refreshToken: refreshToken }
         });
         if (!refreshTokenRecord) {
-            throw new AppError('Invalid refresh token', 500);
+            throw new AppError('Invalid refresh token', 404);
         }
 
         const accessTokenRecord = await Token.findOne({
