@@ -3,9 +3,10 @@ const productController = require('../../../controllers/user/products/productCon
 
 const productRoute = express.Router();
 
+productRoute.get('/create', productController.createProductGet);
 productRoute.get('/', productController.getAllProducts);
 productRoute.get('/:id', productController.getProductById);
-productRoute.post('/', productController.createProduct);
+productRoute.post('/', productController.createProductPost);
 productRoute.put('/:id', productController.updateProduct);
 productRoute.delete('/:id', productController.deleteProduct);
 

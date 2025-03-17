@@ -16,7 +16,6 @@ routerUser.use('/unit', unitRoutes);
 routerUser.use('/brand', brandRoutes);
 routerUser.use('/category', categoryRoutes);
 routerUser.use('/product', productRoutes);
-
 routerUser.use('/', userProfileRoutes);
 
 module.exports = routerUser;

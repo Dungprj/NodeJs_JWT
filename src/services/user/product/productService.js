@@ -39,8 +39,47 @@ const productService = {
         return product;
     },
 
+    createProductGet: async user => {
+        let result = [];
+
+        const resultTax = await Tax.findAll({
+            attributes: ['id', 'name'],
+            where: {
+                created_by: user.id
+            }
+        });
+        const resultUnit = await Unit.findAll({
+            attributes: ['id', 'name'],
+            where: {
+                created_by: user.id
+            }
+        });
+        const resultCategory = await Category.findAll({
+            attributes: ['id', 'name'],
+            where: {
+                created_by: user.id
+            }
+        });
+
+        const resultBrand = await Brand.findAll({
+            attributes: ['id', 'name'],
+            where: {
+                created_by: user.id
+            }
+        });
+
+        result = {
+            tax: resultTax,
+            unit: resultUnit,
+            category: resultCategory,
+            brand: resultBrand
+        };
+
+        return result;
+    },
+
     // Tạo sản phẩm mới
-    createProduct: async data => {
+    createProductPost: async data => {
         // Kiểm tra các trường bắt buộc
         if (!data.name || !data.slug || !data.sale_price) {
             throw new AppError('Tên, slug và giá bán là bắt buộc', 400);

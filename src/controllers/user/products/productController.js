@@ -40,7 +40,7 @@ const productController = {
     }),
 
     // Tạo mới sản phẩm (201 Created | 400 Bad Request)
-    createProduct: catchAsync(async (req, res, next) => {
+    createProductPost: catchAsync(async (req, res, next) => {
         // Xử lý tải ảnh sản phẩm lên
         upload.single('image')(req, res, async err => {
             if (err) {
@@ -54,7 +54,7 @@ const productController = {
             };
 
             // Gọi service để tạo sản phẩm mới
-            const newProduct = await productService.createProduct(
+            const newProduct = await productService.createProductPost(
                 newProductData
             );
 
@@ -66,7 +66,12 @@ const productController = {
             );
         });
     }),
-
+    // Tạo mới sản phẩm (201 Created | 400 Bad Request)
+    createProductGet: catchAsync(async (req, res, next) => {
+        // Gọi service để tạo sản phẩm mới
+        const data = await productService.createProductGet(req.user);
+        return ApiResponse.success(res, data, 'dữ liệu trả về thành công', 200);
+    }),
     // Cập nhật sản phẩm (200 OK | 404 Not Found)
     updateProduct: catchAsync(async (req, res, next) => {
         const updatedProduct = await productService.updateProduct(
