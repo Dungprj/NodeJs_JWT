@@ -5,19 +5,26 @@ const Category = require('../../../db/models/category');
 const Brand = require('../../../db/models/brand');
 const User = require('../../../db/models/user');
 const AppError = require('../../../utils/appError');
+const {
+    getProductById
+} = require('../../../controllers/user/products/productController');
 
 const productService = {
     // Lấy tất cả sản phẩm
-    getAllProducts: async () => {
+    getAllProducts: async user => {
         return await Product.findAll({
             include: [
-                { model: Tax, as: 'tax' },
-                { model: Unit, as: 'unit' },
-                { model: Category, as: 'category' },
-                { model: Brand, as: 'brand' },
-                { model: User, as: 'creator' }
+                // { model: Tax, as: 'tax' },
+                // { model: Unit, as: 'unit' },
+                { model: Category, as: 'category', attributes: ['id', 'name'] },
+                { model: Brand, as: 'brand', attributes: ['id', 'name'] }
+                // { model: User, as: 'creator' }
             ],
-            order: [['created_at', 'DESC']]
+            order: [['created_at', 'DESC']],
+
+            where: {
+                created_by: user.id
+            }
         });
     },
 
@@ -39,7 +46,7 @@ const productService = {
         return product;
     },
 
-    createProductGet: async user => {
+    ProductGetInit: async user => {
         let result = [];
 
         const resultTax = await Tax.findAll({
@@ -79,7 +86,7 @@ const productService = {
     },
 
     // Tạo sản phẩm mới
-    createProductPost: async data => {
+    createProductPost: async (data, user) => {
         // Kiểm tra các trường bắt buộc
         if (!data.name || !data.slug || !data.sale_price) {
             throw new AppError('Tên, slug và giá bán là bắt buộc', 400);
@@ -102,7 +109,7 @@ const productService = {
             brand_id: data.brand_id,
             image: image, // Lưu tên ảnh vào DB nếu có
             product_type: data.product_type || 0,
-            created_by: data.created_by
+            created_by: user.id
         });
     },
 

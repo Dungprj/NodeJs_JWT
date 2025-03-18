@@ -7,7 +7,8 @@ const upload = require('../../../utils/upload'); // Import Multer config
 const productController = {
     // Lấy danh sách sản phẩm (200 OK)
     getAllProducts: catchAsync(async (req, res, next) => {
-        const products = await productService.getAllProducts();
+        const userCur = req.user;
+        const products = await productService.getAllProducts(userCur);
 
         if (!products.length) {
             return next(
@@ -38,9 +39,19 @@ const productController = {
             200
         );
     }),
-
+    ProductGetInit: catchAsync(async (req, res) => {
+        const userCurrent = req.user;
+        const products = await productService.ProductGetInit(userCurrent);
+        return ApiResponse.success(
+            res,
+            products,
+            'Lấy danh sách thông tin khởi tạo sản phẩm thành công  ',
+            200
+        );
+    }),
     // Tạo mới sản phẩm (201 Created | 400 Bad Request)
     createProductPost: catchAsync(async (req, res, next) => {
+        const userCurrent = req.user;
         // Xử lý tải ảnh sản phẩm lên
         upload.single('image')(req, res, async err => {
             if (err) {
@@ -55,7 +66,8 @@ const productController = {
 
             // Gọi service để tạo sản phẩm mới
             const newProduct = await productService.createProductPost(
-                newProductData
+                newProductData,
+                userCurrent
             );
 
             return ApiResponse.success(
@@ -66,12 +78,7 @@ const productController = {
             );
         });
     }),
-    // Tạo mới sản phẩm (201 Created | 400 Bad Request)
-    createProductGet: catchAsync(async (req, res, next) => {
-        // Gọi service để tạo sản phẩm mới
-        const data = await productService.createProductGet(req.user);
-        return ApiResponse.success(res, data, 'dữ liệu trả về thành công', 200);
-    }),
+
     // Cập nhật sản phẩm (200 OK | 404 Not Found)
     updateProduct: catchAsync(async (req, res, next) => {
         const updatedProduct = await productService.updateProduct(
