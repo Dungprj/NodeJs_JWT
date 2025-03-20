@@ -53,6 +53,7 @@ const productController = {
     createProductPost: catchAsync(async (req, res, next) => {
         const userCurrent = req.user;
         // Xử lý tải ảnh sản phẩm lên
+        //tên key là image
         upload.single('image')(req, res, async err => {
             if (err) {
                 return next(new AppError(err.message, 400)); // Xử lý lỗi upload
