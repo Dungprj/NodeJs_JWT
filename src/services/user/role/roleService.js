@@ -1,7 +1,9 @@
 const Role = require('../../../db/models/roles');
 const Permission = require('../../../db/models/permissions');
 const RolePermission = require('../../../db/models/rolepermissions');
+const { Op } = require('sequelize');
 
+const sequelize = require('../../../config/database');
 const AppError = require('../../../utils/appError');
 
 const groupByLastWord = arr => {
@@ -37,7 +39,14 @@ const groupByLastWord = arr => {
         const words = item.name.split(' ');
         const lastWord = words[words.length - 1];
 
-        const withlist = ['Language'];
+        const withlist = [
+            'Language',
+            'Logos',
+            'Purchases',
+            'Sales',
+            'Plan',
+            'Order'
+        ];
 
         //check xem có từ trong validLastWord không
         const hasMatch = words.some(cha => validLastWords.includes(cha));
@@ -58,6 +67,21 @@ const groupByLastWord = arr => {
                 result[haiTuCuoi] = [];
             }
             result[haiTuCuoi].push(item);
+        } else if (
+            hasMatch &&
+            !withlist.includes(lastWord) &&
+            words.length == 4
+        ) {
+            const baTuCuoi =
+                words[words.length - 3] +
+                ' ' +
+                words[words.length - 2] +
+                ' ' +
+                words[words.length - 1];
+            if (!result[baTuCuoi]) {
+                result[baTuCuoi] = [];
+            }
+            result[baTuCuoi].push(item);
         } else {
             if (!result[KeyAccount]) {
                 result[KeyAccount] = [];
@@ -73,25 +97,48 @@ const groupByLastWord = arr => {
 };
 
 const roleService = {
-    getListRole: async () => {
-        //get List Permission
+    getListRole: async user => {
+        const roles = await Role.findAll({
+            attributes: ['id', 'name'],
+            include: [
+                {
+                    model: Permission,
+                    group: ['name'],
+                    attributes: ['id', 'name'],
+                    as: 'Role_Permission',
 
-        console.log('data : ', permissions);
-        console.log('length : ', permissions[0].length);
+                    through: {
+                        model: RolePermission,
+                        attributes: [],
+                        as: 'Role_Permission'
+                    }
+                }
+            ],
+            where: { created_by: user.id },
+            raw: false
+        });
 
-        return groupByLastWord(permissions[0]);
+        if (roles.length === 0) {
+            throw new AppError('List permission not found', 404);
+        }
+
+        return roles;
     },
-    createRole: async (roleName, listPermission) => {
+    createRole: async (data, user) => {
         // Bắt đầu transaction để đảm bảo toàn vẹn dữ liệu
-        await sequelize.transaction(async t => {
+        const result = await sequelize.transaction(async t => {
             // 1. Tạo role
             const newRole = await Role.create(
-                { name: roleName },
+                {
+                    name: data.name,
+                    created_by: user.id,
+                    guard_name: data.guard_name
+                },
                 { transaction: t }
             );
 
             // 2. Mảng permission_id
-            const permissionIds = listPermission;
+            const permissionIds = data.permissions;
 
             // 3. Kiểm tra xem các permission này có tồn tại không
             const permissions = await Permission.findAll({
@@ -118,6 +165,115 @@ const roleService = {
                 transaction: t
             });
         });
+
+        return result;
+    },
+    updatePermissionsForRole: async (user, roleId, data) => {
+        const { permissions: permissionIds, name } = data; // Destructure data
+
+        // Kiểm tra đầu vào
+        if (!roleId) {
+            throw new AppError('Role ID is required', 400);
+        }
+
+        // Thực hiện tất cả trong một transaction
+        const result = await sequelize.transaction(async t => {
+            // 1. Tìm role cần cập nhật
+            const role = await Role.findByPk(roleId, { transaction: t });
+            if (!role) {
+                throw new AppError('Role not found', 404);
+            }
+
+            // 2. Kiểm tra quyền sở hữu
+            if (role.created_by !== user.id) {
+                throw new AppError(
+                    'You are not authorized to update this role',
+                    403
+                );
+            }
+
+            // 3. Cập nhật permissions nếu có
+            if (permissionIds && permissionIds.length > 0) {
+                // Kiểm tra xem các permission có tồn tại không
+                const permissions = await Permission.findAll({
+                    where: { id: { [Op.in]: permissionIds } },
+                    transaction: t
+                });
+                if (permissions.length !== permissionIds.length) {
+                    const missingIds = permissionIds.filter(
+                        id => !permissions.some(p => p.id === id)
+                    );
+                    throw new AppError(
+                        `Permissions with IDs ${missingIds.join(
+                            ', '
+                        )} do not exist`,
+                        404
+                    );
+                }
+
+                // Xóa permissions cũ
+                await RolePermission.destroy({
+                    where: { role_id: roleId },
+                    transaction: t
+                });
+
+                // Thêm permissions mới
+                const rolePermissionData = permissionIds.map(permissionId => ({
+                    role_id: roleId,
+                    permission_id: permissionId
+                }));
+                await RolePermission.bulkCreate(rolePermissionData, {
+                    transaction: t
+                });
+            }
+
+            // 4. Cập nhật name nếu có
+            if (name && name !== role.name) {
+                role.name = name;
+                await role.save({ transaction: t });
+            }
+
+            return role; // Trả về instance role đã cập nhật
+        });
+
+        return {
+            message: 'Role updated successfully',
+            role: {
+                id: result.id,
+                name: result.name
+            }
+        };
+    },
+
+    deleteRole: async (roleId, user) => {
+        await sequelize.transaction(async t => {
+            // 1. Tìm role cần xóa
+            const role = await Role.findByPk(roleId, { transaction: t });
+            if (!role) {
+                throw new AppError('Role not found', 404);
+            }
+
+            // 2. Kiểm tra quyền sở hữu (nếu cần)
+            if (role.created_by !== user.id) {
+                throw new AppError(
+                    'You are not authorized to delete this role',
+                    403
+                );
+            }
+
+            // 3. Xóa role (các bản ghi trong role_has_permissions sẽ tự động xóa nhờ onDelete: 'CASCADE')
+
+            await role.destroy({ transaction: t });
+            // 4. Xóa tất cả permissions cũ của role
+
+            //xóa các bản ghi liên quan đên roleId cần xóa ở role_has_permissions
+            await RolePermission.destroy({
+                where: { role_id: roleId },
+                transaction: t
+            });
+        });
+
+        return { message: 'Role deleted successfully' };
     }
 };
 

@@ -26,14 +26,15 @@ const Role = sequelize.define(
             // onDelete: 'CASCADE'
         },
         guard_name: {
-            type: DataTypes.STRING
+            type: DataTypes.STRING,
+            allowNull: false
         },
         created_at: {
-            allowNull: false,
+            allowNull: true,
             type: DataTypes.DATE
         },
         updated_at: {
-            allowNull: false,
+            allowNull: true,
             type: DataTypes.DATE
         }
     },

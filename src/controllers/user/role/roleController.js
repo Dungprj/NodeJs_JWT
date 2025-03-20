@@ -3,8 +3,9 @@ const ApiResponse = require('../../../utils/apiResponse');
 const roleService = require('../../../services/user/role/roleService');
 
 const roleController = {
-    getListRoleInit: catchAsync(async (req, res) => {
-        const listRolePermission = await roleService.getListRole();
+    getListRole: catchAsync(async (req, res) => {
+        const userCurrent = req.user;
+        const listRolePermission = await roleService.getListRole(userCurrent);
         return ApiResponse.success(
             res,
             listRolePermission,
@@ -15,37 +16,39 @@ const roleController = {
 
     createRole: catchAsync(async (req, res) => {
         const userCurrent = req.user;
-        const newBranch = await branchService.createBranch(
-            req.body,
-            userCurrent
-        );
+
+        const role = await roleService.createRole(req.body, userCurrent);
+
         return ApiResponse.success(
             res,
-            newBranch,
-            'Chi nhánh đã được tạo thành công',
+            role,
+            'Vai trò đã được tạo thành công',
             201
         );
     }),
+    updateRole: catchAsync(async (req, res) => {
+        const userCurrent = req.user;
 
-    updateBranch: catchAsync(async (req, res) => {
-        const updatedBranch = await branchService.updateBranch(
+        const updatedRole = await roleService.updatePermissionsForRole(
+            userCurrent,
             req.params.id,
             req.body
         );
         return ApiResponse.success(
             res,
-            updatedBranch,
-            'Cập nhật chi nhánh thành công',
+            updatedRole,
+            'Vai trò đã được cập nhật thành công',
             200
         );
     }),
+    deleteRole: catchAsync(async (req, res) => {
+        const userCurrent = req.user;
 
-    deleteBranch: catchAsync(async (req, res) => {
-        await branchService.deleteBranch(req.params.id);
+        await roleService.deleteRole(req.params.id, userCurrent);
         return ApiResponse.success(
             res,
             null,
-            'Chi nhánh đã được xóa thành công',
+            'Vai trò đã được xóa thành công',
             204
         );
     })

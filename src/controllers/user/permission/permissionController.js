@@ -4,10 +4,10 @@ const permissionService = require('../../../services/user/permission/permissionS
 
 const permissionController = {
     // Lấy danh sách quyền (200 OK)
-    getListPermission: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const permissions = await permissionService.getListPermission(
-            userCurrent
+    getListPermissionInit: catchAsync(async (req, res) => {
+        const typeUserCurrent = req.type;
+        const permissions = await permissionService.getListPermissionInit(
+            typeUserCurrent
         );
 
         return ApiResponse.success(

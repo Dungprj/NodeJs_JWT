@@ -8,10 +8,19 @@ const RolePermission = sequelize.define(
     'RolePermission',
     {
         permission_id: {
+            allowNull: false,
+            primaryKey: true, // Khóa chính ghép
             type: DataTypes.INTEGER
         },
         role_id: {
-            type: DataTypes.INTEGER
+            allowNull: false,
+            primaryKey: true, // Khóa chính ghép
+            type: DataTypes.INTEGER,
+            references: {
+                model: 'Role',
+                key: 'id'
+            },
+            onDelete: 'CASCADE'
         }
     },
     {

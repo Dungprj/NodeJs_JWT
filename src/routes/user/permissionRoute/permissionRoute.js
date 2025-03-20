@@ -3,7 +3,7 @@ const permissionController = require('../../../controllers/user/permission/permi
 
 const permissionRoute = express.Router();
 
-permissionRoute.get('/', permissionController.getListPermission);
+permissionRoute.get('/init', permissionController.getListPermissionInit);
 // permissionRoute.get('/:id', permissionController.getCategoryById);
 // permissionRoute.post('/', permissionController.createCategory);
 // permissionRoute.put('/:id', permissionController.updateCategory);

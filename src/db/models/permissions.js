@@ -45,4 +45,11 @@ Permission.belongsToMany(Role, {
     as: 'Permission_roles' // Tên alias cho quan hệ (tùy chọn)
 });
 
+Role.belongsToMany(Permission, {
+    through: 'role_has_permissions', // Tên bảng trung gian
+    foreignKey: 'role_id', // Khóa ngoại trong bảng role_permissions trỏ đến Permissions
+    otherKey: 'permission_id', // Khóa ngoại trỏ đến Roles
+    as: 'Role_Permission', // Tên alias cho quan hệ (tùy chọn)
+    onDelete: 'CASCADE'
+});
 module.exports = Permission;
