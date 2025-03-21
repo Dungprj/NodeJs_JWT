@@ -9,7 +9,7 @@ const authRoutes = require('./routes/common/auth');
 const userRoutes = require('./routes/user/userRoute');
 const globalErrorHandler = require('./controllers/common/errorController');
 const AppError = require('./utils/appError');
-
+const path = require('path');
 const app = express();
 const port = process.env.PORT || 8888;
 
@@ -21,6 +21,11 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Config upload folder
+const uploadFolder = process.env.UPLOADS_FOLDER || 'uploads';
+
+// Phục vụ file tĩnh từ thư mục uploads
+app.use(`/${uploadFolder}`, express.static(path.join(__dirname, uploadFolder)));
 // Routes
 app.use('/v1/auth/', authRoutes); // Không cần auth middleware
 app.use('/v1/user', middleware.auth, userRoutes); // Bảo vệ route user
