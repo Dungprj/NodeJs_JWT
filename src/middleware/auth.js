@@ -70,14 +70,14 @@ const middleware = {
         if (accessTokenRecord.accessExpireAt < new Date()) {
             throw new AppError('expired access token ', 413);
         }
-
+        //check isvalid access token
         jwt.verify(token, process.env.JWT_ACCESS_SECRET, async (err, user) => {
             if (err) {
                 return next(new AppError('Error verify token', 400));
             }
 
             req.user = user;
-            const type = user.type;
+            req.type = user.type;
         });
 
         return next();

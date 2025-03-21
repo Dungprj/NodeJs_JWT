@@ -3,9 +3,11 @@ const ApiResponse = require('../../../utils/apiResponse');
 const productService = require('../../../services/user/product/productService');
 const AppError = require('../../../utils/appError');
 const upload = require('../../../utils/upload'); // Import Multer config
+const defaultImage = 'default-product.jpg'; // Tên ảnh mặc định
 
 const productController = {
     // Lấy danh sách sản phẩm (200 OK)
+
     getAllProducts: catchAsync(async (req, res, next) => {
         const userCur = req.user;
         const products = await productService.getAllProducts(userCur);
@@ -82,21 +84,39 @@ const productController = {
 
     // Cập nhật sản phẩm (200 OK | 404 Not Found)
     updateProduct: catchAsync(async (req, res, next) => {
-        const updatedProduct = await productService.updateProduct(
-            req.params.id,
-            req.body
-        );
+        // Xử lý tải ảnh sản phẩm lên
+        upload.single('image')(req, res, async err => {
+            if (err) {
+                return next(new AppError(err.message, 400)); // Xử lý lỗi upload
+            }
 
-        if (!updatedProduct) {
-            return next(new AppError('Không thể cập nhật sản phẩm', 400));
-        }
+            // Log dữ liệu nhận được từ client
+            console.log('req.body:', req.body);
+            console.log('req.file:', req.file);
 
-        return ApiResponse.success(
-            res,
-            updatedProduct,
-            'Cập nhật sản phẩm thành công',
-            200
-        );
+            // Thêm tên file ảnh (nếu có) vào dữ liệu cập nhật
+            const updatedProductData = {
+                ...req.body,
+                image: req.file ? req.file.filename : null
+            };
+
+            // Gọi service để cập nhật sản phẩm
+            const updatedProduct = await productService.updateProduct(
+                req.params.id,
+                updatedProductData
+            );
+
+            if (!updatedProduct) {
+                return next(new AppError('Không thể cập nhật sản phẩm', 400));
+            }
+
+            return ApiResponse.success(
+                res,
+                updatedProduct,
+                'Cập nhật sản phẩm thành công',
+                200
+            );
+        });
     }),
 
     // Xóa sản phẩm (204 No Content | 404 Not Found)

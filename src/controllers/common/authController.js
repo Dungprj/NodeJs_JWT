@@ -25,17 +25,24 @@ const authController = {
     handleLogin: catchAsync(async (req, res) => {
         const { email, password } = req.body;
         const data = await authService.handleLoginService(email, password);
+        soLuongQuyenHandled = 0;
+        const listPermissionHandled = [];
 
-        const soLuongQuyen = data.permissions.length;
-        const dataConvert = data.permissions.map(pers => ({
-            [pers.name]: true
-        }));
+        if (data.permissions && data.permissions.length > 0) {
+            const soLuongQuyen = data.permissions.length;
+            soLuongQuyenHandled = soLuongQuyen;
+            const dataConvert = data.permissions.map(pers => ({
+                [pers.name]: true
+            }));
 
-        // Gộp mảng thành một object
-        const mergedObject = dataConvert.reduce(
-            (result, item) => Object.assign(result, item),
-            {}
-        );
+            // Gộp mảng thành một object
+            const mergedObject = dataConvert.reduce(
+                (result, item) => Object.assign(result, item),
+                {}
+            );
+
+            listPermissionHandled = mergedObject;
+        }
 
         return ApiResponse.success(
             res,
@@ -50,8 +57,8 @@ const authController = {
                         {
                             roleId: data.user.roleId,
                             roleName: data.user.roleName,
-                            soLuongQuyen: soLuongQuyen,
-                            permissions: mergedObject
+                            soLuongQuyen: soLuongQuyenHandled,
+                            permissions: listPermissionHandled
                         }
                     ]
                 }

@@ -119,7 +119,7 @@ const roleService = {
         });
 
         if (roles.length === 0) {
-            throw new AppError('List permission not found', 404);
+            throw new AppError('List role not found', 404);
         }
 
         return roles;

@@ -115,6 +115,9 @@ const productService = {
 
     // Cập nhật thông tin sản phẩm
     updateProduct: async (id, data) => {
+        if (!data) {
+            throw new AppError('Bạn chuyền gì đó đi', 404);
+        }
         if (!id) throw new AppError('ID sản phẩm là bắt buộc', 400);
 
         const product = await Product.findByPk(id);

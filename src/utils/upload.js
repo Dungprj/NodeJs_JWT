@@ -12,7 +12,7 @@ const storage = multer.diskStorage({
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + path.extname(file.originalname);
-        cb(null, 'product-' + uniqueSuffix); // Tên file ảnh
+        cb(null, 'WinTech-' + uniqueSuffix); // Tên file ảnh
     }
 });
 

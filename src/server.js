@@ -23,7 +23,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Config upload folder
 const uploadFolder = process.env.UPLOADS_FOLDER || 'uploads';
-
+// Phục vụ file tĩnh từ thư mục public (ảnh mặc định)
+app.use('/public', express.static(path.join(__dirname, 'public')));
 // Phục vụ file tĩnh từ thư mục uploads
 app.use(`/${uploadFolder}`, express.static(path.join(__dirname, uploadFolder)));
 // Routes

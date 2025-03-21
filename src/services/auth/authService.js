@@ -180,7 +180,7 @@ const authService = {
                         as: 'Role_user'
                     },
                     where: {
-                        name: 'Owner'
+                        name: isExistUser.type
                     }
                 })
             ]);
