@@ -87,7 +87,7 @@ const User = sequelize.define(
         is_active: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            defaultValue: 0
+            defaultValue: 1
         },
         user_status: {
             type: DataTypes.INTEGER,
@@ -136,10 +136,14 @@ const User = sequelize.define(
             },
             beforeUpdate: async User => {
                 if (User.changed('password')) {
+                    console.log('password : ', User.password);
+                    console.log('confirmPassword : ', User.confirmPassword);
+
                     // Chỉ chạy khi password thay đổi
                     if (User.password !== User.confirmPassword) {
                         throw new AppError(
-                            'Confirm Password does not match Password'
+                            'Confirm Password does not match Password',
+                            400
                         );
                     }
                     const hashedPassword = await bcrypt.hash(User.password, 10);

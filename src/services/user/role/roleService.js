@@ -137,33 +137,35 @@ const roleService = {
                 { transaction: t }
             );
 
-            // 2. Mảng permission_id
-            const permissionIds = data.permissions;
+            if (data.permissions) {
+                // 2. Mảng permission_id
+                const permissionIds = data.permissions;
 
-            // 3. Kiểm tra xem các permission này có tồn tại không
-            const permissions = await Permission.findAll({
-                where: {
-                    id: permissionIds
-                },
-                transaction: t
-            });
+                // 3. Kiểm tra xem các permission này có tồn tại không
+                const permissions = await Permission.findAll({
+                    where: {
+                        id: permissionIds
+                    },
+                    transaction: t
+                });
 
-            if (permissions.length !== permissionIds.length) {
-                throw new AppError(
-                    'Not all permissions exist in the database',
-                    404
-                );
+                if (permissions.length !== permissionIds.length) {
+                    throw new AppError(
+                        'Not all permissions exist in the database',
+                        404
+                    );
+                }
+
+                // 4. Gán permissions cho role qua bảng role_permission
+                const rolePermissionData = permissionIds.map(permissionId => ({
+                    role_id: newRole.id,
+                    permission_id: permissionId
+                }));
+
+                await RolePermission.bulkCreate(rolePermissionData, {
+                    transaction: t
+                });
             }
-
-            // 4. Gán permissions cho role qua bảng role_permission
-            const rolePermissionData = permissionIds.map(permissionId => ({
-                role_id: newRole.id,
-                permission_id: permissionId
-            }));
-
-            await RolePermission.bulkCreate(rolePermissionData, {
-                transaction: t
-            });
         });
 
         return result;

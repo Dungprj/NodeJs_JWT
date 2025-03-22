@@ -26,7 +26,7 @@ const authController = {
         const { email, password } = req.body;
         const data = await authService.handleLoginService(email, password);
         soLuongQuyenHandled = 0;
-        const listPermissionHandled = [];
+        let listPermissionHandled = [];
 
         if (data.permissions && data.permissions.length > 0) {
             const soLuongQuyen = data.permissions.length;

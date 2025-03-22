@@ -113,6 +113,9 @@ const authService = {
         const result = newUser.toJSON();
 
         delete result.password;
+
+        delete result.confirmPassword;
+
         delete result.deletedAt;
 
         // Trả về response
@@ -170,6 +173,7 @@ const authService = {
 
             //Truy vấn database để lấy danh sách quyền dựa trên idRole
             const permissions = await commom.getListPermission(isExistUser);
+            console.log('permissions: ' + permissions);
 
             const [roleId] = await Promise.all([
                 Role.findAll({
@@ -196,7 +200,7 @@ const authService = {
                     roleId: roleId[0].id,
                     roleName: isExistUser.type
                 },
-                permissions: permissions[0]
+                permissions: permissions
             };
         } catch (error) {
             throw new AppError(error.message || 'Error logging in', 400);
