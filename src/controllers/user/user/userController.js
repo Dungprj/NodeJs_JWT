@@ -13,9 +13,20 @@ const userController = {
             200
         );
     }),
-    getUserInit: catchAsync(async (req, res) => {
+
+    getuserById: catchAsync(async (req, res) => {
+        const userById = await userService.getUserById(req.params.id);
+        return ApiResponse.success(
+            res,
+            userById,
+            'Lấy thông tin user theo id thành công',
+            200
+        );
+    }),
+
+    AddUserInit: catchAsync(async (req, res) => {
         const user = req.user;
-        const userInit = await userService.getUserInit(user);
+        const userInit = await userService.AddUserInit(user);
         return ApiResponse.success(
             res,
             userInit,
@@ -26,8 +37,9 @@ const userController = {
 
     handleActiveUser: catchAsync(async (req, res) => {
         const id = req.params.id;
-        const status = req.body.status;
-        const updatedUser = await userService.handleStatusUser(id, status);
+
+        console.log('body: ' + JSON.stringify(req.body));
+        const updatedUser = await userService.handleActiveUser(id, req.body);
 
         return ApiResponse.success(
             res,

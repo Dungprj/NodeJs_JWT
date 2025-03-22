@@ -32,7 +32,19 @@ const userService = {
 
         return result;
     },
-    getUserInit: async user => {
+
+    getUserById: async id => {
+        const user = await User.findByPk(id);
+        if (!user) {
+            throw new AppError('User not found', 404);
+        }
+        const res = user.toJSON();
+        delete res.password;
+        delete res.confirmPassword;
+        delete res.deletedAt;
+        return res;
+    },
+    AddUserInit: async user => {
         //get danh sach vai tro cua user dang dang nhap
 
         const roleList = await Role.findAll({
@@ -64,15 +76,17 @@ const userService = {
             cashRegisterList
         };
     },
-    handleStatusUser: async (id, status) => {
+    handleActiveUser: async (id, data) => {
         const user = await User.findByPk(id);
         if (!user) {
             throw new AppError('Không tìm thấy user để xử lý trạng thái', 404);
         }
 
-        if (id && status) {
-            user.is_active = status;
+        if (data.status == null) {
+            throw new AppError('Trạng thái chưa hợp lệ', 400);
         }
+
+        user.is_active = data.status;
 
         await user.save();
         return user;

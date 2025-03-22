@@ -3,14 +3,27 @@ const userProfileController = require('../../../controllers/user/user/userContro
 
 const userRoute = express.Router();
 
+// Lấy danh sách users
 userRoute.get('/', userProfileController.getListUser);
-userRoute.get('/init', userProfileController.getUserInit);
-userRoute.post('/', userProfileController.addUser);
-userRoute.put('/handleStatus/:id', userProfileController.handleActiveUser);
 
-// userProfileRoute.get('/:id', userProfileController.getuserById);
-// userProfileRoute.delete('/:id', userProfileController.deleteUser);
+// Lấy dữ liệu khởi tạo để thêm user (không hoàn toàn RESTful nhưng chấp nhận được)
+userRoute.get('/init', userProfileController.AddUserInit);
+
+// Tạo user mới
+userRoute.post('/', userProfileController.addUser);
+
+// Lấy thông tin user theo id
+userRoute.get('/:id', userProfileController.getuserById);
+
+// Cập nhật toàn bộ thông tin user
 userRoute.put('/:id', userProfileController.updateUser);
-userRoute.put('/setPassword/:id', userProfileController.setAgainPassword);
+
+// Cập nhật một phần thông tin user (ví dụ: chỉ trạng thái hoặc mật khẩu)
+userRoute.patch('/:id', userProfileController.updateUser); // Có thể dùng chung với PUT nếu logic linh hoạt
+userRoute.patch('/:id/active', userProfileController.handleActiveUser); // Cập nhật trạng thái
+userRoute.patch('/:id/password', userProfileController.setAgainPassword); // Đặt lại mật khẩu
+
+// Xóa user
+// userRoute.delete('/:id', userProfileController.deleteUser);
 
 module.exports = userRoute;
