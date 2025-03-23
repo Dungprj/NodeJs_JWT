@@ -1,8 +1,22 @@
 require('dotenv').config();
 const CashRegister = require('../../../db/models/cashregister');
+const Branch = require('../../../db/models/branch');
+
 const AppError = require('../../../utils/appError');
 
 const cashRegisterService = {
+    getCashRegisterInit: async user => {
+        const branchList = await Branch.findAll({
+            where: {
+                created_by: user.id
+            }
+        });
+
+        if (!branchList) {
+            throw new AppError('Danh sách chi nhánh không tồn tại', 404);
+        }
+        return branchList;
+    },
     // Lấy tất cả quầy thu ngân của user (200 OK | 404 Not Found)
     getAllCashRegisters: async user => {
         const cashRegisters = await CashRegister.findAll({

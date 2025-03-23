@@ -12,6 +12,7 @@ const permissionRoutes = require('./permissionRoute/permissionRoute');
 const CashRegisterRoutes = require('./cashRegisterRoute/cashRegisterRoute');
 const userProfileRoutes = require('./userProfileRoute/userProfileRoute');
 const userManagerRoutes = require('./managerUserRoute/managerUserRoute');
+const vendorRoutes = require('./vendorRoute/vendorRoute');
 
 const routerUser = express.Router();
 
@@ -26,6 +27,7 @@ routerUser.use('/role', roleRoutes);
 routerUser.use('/permission', permissionRoutes);
 routerUser.use('/cashRegister', CashRegisterRoutes);
 routerUser.use('/managerUser', userManagerRoutes);
+routerUser.use('/vendor', vendorRoutes);
 
 routerUser.use('/', userProfileRoutes);
 

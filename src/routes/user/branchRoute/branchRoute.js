@@ -5,6 +5,12 @@ const checkPermission = require('../../../middleware/permission');
 const PERMISSION = require('../../../utils/permission');
 
 branchRoutes.get(
+    '/init',
+    checkPermission(PERMISSION.CREATE_BRANCH),
+    branchController.getInitBranch
+);
+
+branchRoutes.get(
     '/',
     checkPermission(PERMISSION.MANAGE_BRANCH),
     branchController.getListBranches

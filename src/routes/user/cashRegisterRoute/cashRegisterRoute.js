@@ -10,6 +10,11 @@ cashRegisterRoutes.get(
     checkPermission(PERMISSION.MANAGE_CASH_REGISTER),
     cashRegisterController.getListCashRegisters
 );
+cashRegisterRoutes.get(
+    '/init',
+    checkPermission(PERMISSION.MANAGE_CASH_REGISTER),
+    cashRegisterController.getCashRegisterInit
+);
 cashRegisterRoutes.post(
     '/',
     checkPermission(PERMISSION.CREATE_CASH_REGISTER),

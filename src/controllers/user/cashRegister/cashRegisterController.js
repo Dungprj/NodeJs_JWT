@@ -16,6 +16,19 @@ const cashRegisterController = {
         );
     }),
 
+    getCashRegisterInit: catchAsync(async (req, res) => {
+        const userCurrent = req.user;
+        const cashRegistersInit = await cashRegisterService.getCashRegisterInit(
+            userCurrent
+        );
+        return ApiResponse.success(
+            res,
+            cashRegistersInit,
+            'Lấy danh sách quầy thu ngân thành công',
+            200
+        );
+    }),
+
     getCashRegisterById: catchAsync(async (req, res) => {
         const cashRegister = await cashRegisterService.getCashRegisterById(
             req.params.id

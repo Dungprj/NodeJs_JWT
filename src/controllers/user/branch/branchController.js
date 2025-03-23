@@ -3,6 +3,16 @@ const ApiResponse = require('../../../utils/apiResponse');
 const branchService = require('../../../services/user/branch/branchService');
 
 const branchController = {
+    getInitBranch: catchAsync(async (req, res) => {
+        const userCurrent = req.user;
+        const branchesInit = await branchService.getInitBranch(userCurrent);
+        return ApiResponse.success(
+            res,
+            branchesInit,
+            'Lấy danh sách khởi tạo chi nhánh thành công',
+            200
+        );
+    }),
     getListBranches: catchAsync(async (req, res) => {
         const userCurrent = req.user;
         const branches = await branchService.getAllBranches(userCurrent);
