@@ -32,7 +32,7 @@ const invoicePurchaseService = {
             include: [{ model: InvoicePurchaseDetail, as: 'details' }],
             where: {
                 created_by: user.id,
-                invoice_id: id
+                id: id
             }
         });
         if (!invoicePurchase) {
@@ -177,7 +177,12 @@ const invoicePurchaseService = {
 
     // Cập nhật hóa đơn nhập hàng (200 OK | 404 Not Found | 400 Bad Request)
     updateInvoicePurchase: async (id, data, user) => {
-        const invoicePurchase = await InvoicePurchase.findByPk(id);
+        const invoicePurchase = await InvoicePurchase.findOne({
+            where: {
+                id: id,
+                created_by: user.id
+            }
+        });
         if (!invoicePurchase) {
             throw new AppError(
                 'Không tìm thấy hóa đơn nhập hàng để cập nhật',

@@ -38,7 +38,7 @@ const InvoicePurchase = sequelize.define(
             defaultValue: 0 // DEFAULT 0
         },
         status: {
-            type: DataTypes.TINYINT, // Sửa thành TINYINT
+            type: DataTypes.ENUM(0, 1, 2),
             allowNull: false, // NOT NULL
             defaultValue: 0 // DEFAULT 0
         },

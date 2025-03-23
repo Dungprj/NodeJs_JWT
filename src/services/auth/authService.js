@@ -136,13 +136,13 @@ const authService = {
                 throw new AppError('Email not exists', 404);
             }
 
-            // const isMatch = await bcrypt.compare(
-            //     password,
-            //     isExistUser.password
-            // );
-            // if (!isMatch) {
-            //     throw new AppError('Invalid email or password', 404);
-            // }
+            const isMatch = await bcrypt.compare(
+                password,
+                isExistUser.password
+            );
+            if (!isMatch) {
+                throw new AppError('Invalid email or password', 404);
+            }
 
             const accessToken = authService.generateAccessToken(isExistUser);
             const refreshToken = authService.generateRefreshToken(isExistUser);
