@@ -3,7 +3,6 @@ require('dotenv').config();
 const { Op } = require('sequelize');
 const InvoicePurchase = require('../../../db/models/invoicePurchase');
 const InvoicePurchaseDetail = require('../../../db/models/invoicePurchaseDetail');
-const Inventory = require('../../../db/models/inventory'); // Giả định bạn có model Inventory
 const Product = require('../../../db/models/product'); // Giả định bạn có model Product
 const AppError = require('../../../utils/appError');
 
@@ -28,9 +27,13 @@ const invoicePurchaseService = {
     },
 
     // Lấy hóa đơn nhập hàng theo ID (200 OK | 404 Not Found)
-    getInvoicePurchaseById: async id => {
-        const invoicePurchase = await InvoicePurchase.findByPk(id, {
-            include: [{ model: InvoicePurchaseDetail, as: 'details' }]
+    getInvoicePurchaseById: async (user, id) => {
+        const invoicePurchase = await InvoicePurchase.findAll({
+            include: [{ model: InvoicePurchaseDetail, as: 'details' }],
+            where: {
+                created_by: user.id,
+                invoice_id: id
+            }
         });
         if (!invoicePurchase) {
             throw new AppError('Không tìm thấy hóa đơn nhập hàng', 404);
@@ -41,8 +44,9 @@ const invoicePurchaseService = {
     // Tạo hóa đơn nhập hàng mới (201 Created | 400 Bad Request)
     createInvoicePurchase: async (data, user) => {
         if (
-            !data.brandId ||
+            !data.branchId ||
             !data.products ||
+            !data.cashRegisterId ||
             !Array.isArray(data.products) ||
             data.products.length === 0
         ) {
@@ -57,7 +61,7 @@ const invoicePurchaseService = {
 
         try {
             // Tính tổng tiền hóa đơn và kiểm tra trùng lặp sản phẩm
-            let totalAmount = 0;
+            // let totalAmount = 0;
             const itemsMap = new Map();
             for (const product of data.products) {
                 if (!product.id || !product.quantity) {
@@ -78,55 +82,53 @@ const invoicePurchaseService = {
                     );
                 }
 
-                const price = productInfo.price || 0; // Giả định bảng Products có cột price
-                const tax = 0; // Giả định không có thuế, bạn có thể thêm logic tính thuế nếu cần
-                const totalPrice = parseFloat(product.quantity) * price;
+                // const totalPrice = parseFloat(product.quantity) * price;
 
                 const key = product.id;
                 if (itemsMap.has(key)) {
                     const existingItem = itemsMap.get(key);
                     existingItem.quantity += parseFloat(product.quantity);
-                    existingItem.total_price = existingItem.quantity * price;
                 } else {
                     itemsMap.set(key, {
                         product_id: product.id,
+                        price: productInfo.purchase_price || 0,
                         quantity: parseFloat(product.quantity),
-                        price: price,
-                        tax: tax,
-                        total_price: totalPrice
+                        tax_id: product.tax_id,
+                        tax: productInfo.tax || 0
+
+                        // total_price: totalPrice
                     });
                 }
-                totalAmount += totalPrice + tax;
+                // totalAmount += totalPrice + tax;
             }
 
-            // Tạo mã hóa đơn (PINV-<created_by>-XXX)
-            const prefix = `PINV-${user.id}-`;
+            // Tạo mã hóa đơn
+            //
+
             const lastInvoice = await InvoicePurchase.findOne({
                 where: {
-                    created_by: user.id,
-                    invoice_id: { [Op.like]: `${prefix}%` }
+                    created_by: user.id
                 },
                 order: [['id', 'DESC']],
                 transaction,
-                lock: transaction.LOCK.ADD
+                lock: transaction.LOCK.UPDATE
             });
 
             // Tính số thứ tự (sequence)
             const sequence = lastInvoice
-                ? parseInt(lastInvoice.invoice_id.split('-')[2]) + 1
+                ? parseInt(lastInvoice.invoice_id) + 1
                 : 1;
-            const invoiceId = `${prefix}${String(sequence).padStart(3, '0')}`; // Định dạng số thứ tự với 3 chữ số (001, 002, ...)
+            const invoiceId = sequence; // Định dạng số thứ tự với 3 chữ số (001, 002, ...)
 
             // Tạo hóa đơn nhập hàng
             const newInvoicePurchase = await InvoicePurchase.create(
                 {
                     invoice_id: invoiceId,
-                    vendor_id: 0, // Giả định vendor_id mặc định là 0 vì form không cung cấp
-                    branch_id: data.brandId,
+                    vendor_id: data.vendor_id || 0, // Giả định vendor_id mặc định là 0 vì form không cung cấp
+                    branch_id: data.branchId,
                     cash_register_id: data.cashRegisterId || 0,
                     status: 0, // Giả định trạng thái mặc định
-                    created_by: user.id,
-                    total_amount: totalAmount
+                    created_by: user.id
                 },
                 { transaction }
             );
@@ -137,32 +139,30 @@ const invoicePurchaseService = {
                 product_id: item.product_id,
                 price: item.price,
                 quantity: item.quantity,
-                tax_id: 0, // Giả định không có thuế
+                tax_id: item.tax_id,
                 tax: item.tax
             }));
             await InvoicePurchaseDetail.bulkCreate(invoiceDetails, {
                 transaction
             });
 
-            // Cập nhật tồn kho
+            // Cập nhật tồn kho trực tiếp trong bảng Products
             for (const item of itemsMap.values()) {
-                const inventory = await Inventory.findOne({
-                    where: { product_id: item.product_id },
+                const product = await Product.findOne({
+                    where: { id: item.product_id },
                     transaction,
                     lock: transaction.LOCK.UPDATE
                 });
-                if (inventory) {
-                    inventory.quantity += parseFloat(item.quantity);
-                    await inventory.save({ transaction });
-                } else {
-                    await Inventory.create(
-                        {
-                            product_id: item.product_id,
-                            quantity: item.quantity
-                        },
-                        { transaction }
+                if (!product) {
+                    throw new AppError(
+                        `Sản phẩm với ID ${item.product_id} không tồn tại`,
+                        404
                     );
                 }
+                // Cộng số lượng vào quantity của sản phẩm
+                product.quantity =
+                    (product.quantity || 0) + parseFloat(item.quantity);
+                await product.save({ transaction });
             }
 
             // Commit transaction
@@ -185,19 +185,16 @@ const invoicePurchaseService = {
             );
         }
 
-        // Kiểm tra quyền truy cập
-        if (invoicePurchase.created_by !== user.id) {
-            throw new AppError('Bạn không có quyền cập nhật hóa đơn này', 403);
-        }
-
         // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
         const transaction = await InvoicePurchase.sequelize.transaction();
 
         try {
             // Cập nhật các trường được phép
-            if (data.brandId) invoicePurchase.branch_id = data.brandId;
-            if (data.cashRegisterId !== undefined)
-                invoicePurchase.cash_register_id = data.cashRegisterId;
+            if (data.branchId) invoicePurchase.branch_id = data.branchId;
+            if (data.registerId !== undefined)
+                invoicePurchase.cash_register_id = data.registerId;
+            if (data.vendor_id !== undefined)
+                invoicePurchase.vendor_id = data.vendor_id;
             if (data.status !== undefined) invoicePurchase.status = data.status;
 
             // Nếu có danh sách sản phẩm mới, cập nhật chi tiết hóa đơn
@@ -214,20 +211,20 @@ const invoicePurchaseService = {
 
                 // Trừ tồn kho của các chi tiết hiện tại
                 for (const detail of currentDetails) {
-                    const inventory = await Inventory.findOne({
-                        where: { product_id: detail.product_id },
+                    const product = await Product.findOne({
+                        where: { id: detail.product_id },
                         transaction,
                         lock: transaction.LOCK.UPDATE
                     });
-                    if (inventory) {
-                        inventory.quantity -= parseFloat(detail.quantity);
-                        if (inventory.quantity < 0) {
+                    if (product) {
+                        product.quantity -= parseFloat(detail.quantity);
+                        if (product.quantity < 0) {
                             throw new AppError(
                                 'Số lượng tồn kho không đủ để cập nhật hóa đơn',
                                 400
                             );
                         }
-                        await inventory.save({ transaction });
+                        await product.save({ transaction });
                     }
                 }
 
@@ -237,8 +234,7 @@ const invoicePurchaseService = {
                     transaction
                 });
 
-                // Tính tổng tiền mới và kiểm tra trùng lặp sản phẩm
-                let totalAmount = 0;
+                // Kiểm tra trùng lặp sản phẩm và tạo itemsMap
                 const itemsMap = new Map();
                 for (const product of data.products) {
                     if (!product.id || !product.quantity) {
@@ -259,26 +255,19 @@ const invoicePurchaseService = {
                         );
                     }
 
-                    const price = productInfo.price || 0;
-                    const tax = 0; // Giả định không có thuế
-                    const totalPrice = parseFloat(product.quantity) * price;
-
                     const key = product.id;
                     if (itemsMap.has(key)) {
                         const existingItem = itemsMap.get(key);
                         existingItem.quantity += parseFloat(product.quantity);
-                        existingItem.total_price =
-                            existingItem.quantity * price;
                     } else {
                         itemsMap.set(key, {
                             product_id: product.id,
+                            price: productInfo.purchase_price || 0,
                             quantity: parseFloat(product.quantity),
-                            price: price,
-                            tax: tax,
-                            total_price: totalPrice
+                            tax_id: product.tax_id || 0, // Đồng bộ với createInvoicePurchase
+                            tax: productInfo.tax || 0 // Đồng bộ với createInvoicePurchase
                         });
                     }
-                    totalAmount += totalPrice + tax;
                 }
 
                 // Tạo chi tiết hóa đơn mới
@@ -288,7 +277,7 @@ const invoicePurchaseService = {
                         product_id: item.product_id,
                         price: item.price,
                         quantity: item.quantity,
-                        tax_id: 0,
+                        tax_id: item.tax_id,
                         tax: item.tax
                     })
                 );
@@ -298,27 +287,22 @@ const invoicePurchaseService = {
 
                 // Cập nhật tồn kho với danh sách mới
                 for (const item of itemsMap.values()) {
-                    const inventory = await Inventory.findOne({
-                        where: { product_id: item.product_id },
+                    const product = await Product.findOne({
+                        where: { id: item.product_id },
                         transaction,
                         lock: transaction.LOCK.UPDATE
                     });
-                    if (inventory) {
-                        inventory.quantity += parseFloat(item.quantity);
-                        await inventory.save({ transaction });
-                    } else {
-                        await Inventory.create(
-                            {
-                                product_id: item.product_id,
-                                quantity: item.quantity
-                            },
-                            { transaction }
+                    if (!product) {
+                        throw new AppError(
+                            `Sản phẩm với ID ${item.product_id} không tồn tại`,
+                            404
                         );
                     }
+                    // Cộng số lượng vào quantity của sản phẩm
+                    product.quantity =
+                        (product.quantity || 0) + parseFloat(item.quantity);
+                    await product.save({ transaction });
                 }
-
-                // Cập nhật tổng tiền hóa đơn
-                invoicePurchase.total_amount = totalAmount;
             }
 
             await invoicePurchase.save({ transaction });
@@ -355,22 +339,22 @@ const invoicePurchaseService = {
                 transaction
             });
 
-            // Cập nhật tồn kho
+            // Cập nhật tồn kho trực tiếp trong bảng Products
             for (const detail of details) {
-                const inventory = await Inventory.findOne({
-                    where: { product_id: detail.product_id },
+                const product = await Product.findOne({
+                    where: { id: detail.product_id },
                     transaction,
                     lock: transaction.LOCK.UPDATE
                 });
-                if (inventory) {
-                    inventory.quantity -= parseFloat(detail.quantity);
-                    if (inventory.quantity < 0) {
+                if (product) {
+                    product.quantity -= parseFloat(detail.quantity);
+                    if (product.quantity < 0) {
                         throw new AppError(
                             'Số lượng tồn kho không đủ để xóa hóa đơn',
                             400
                         );
                     }
-                    await inventory.save({ transaction });
+                    await product.save({ transaction });
                 }
             }
 

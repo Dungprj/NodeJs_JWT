@@ -4,6 +4,9 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
 const AppError = require('../../utils/appError');
 const User = require('./user');
+const Product = require('./product');
+const Tax = require('./tax');
+
 const InvoicePurchase = require('./invoicePurchase');
 const InvoicePurchaseDetail = sequelize.define(
     'InvoicePurchaseDetail',
@@ -59,11 +62,6 @@ InvoicePurchaseDetail.belongsTo(InvoicePurchase, {
 InvoicePurchaseDetail.belongsTo(Product, {
     foreignKey: 'product_id',
     as: 'product'
-});
-
-InvoicePurchaseDetail.belongsTo(Tax, {
-    foreignKey: 'tax_id',
-    as: 'tax'
 });
 
 // Định nghĩa mối quan hệ ngược từ InvoicePurchase
