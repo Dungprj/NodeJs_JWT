@@ -28,6 +28,8 @@ const vendorService = {
 
     // Tạo nhà cung cấp mới (201 Created | 400 Bad Request)
     createVendor: async (data, user) => {
+        //lay goi hien tai
+        // lay so nha cung cap max
         if (!data.name || !data.email || !data.phone_number) {
             throw new AppError('Tên, email và số điện thoại là bắt buộc', 400);
         }
