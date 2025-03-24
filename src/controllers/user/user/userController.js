@@ -9,7 +9,7 @@ const userController = {
         return ApiResponse.success(
             res,
             users,
-            'Lấy danh sách user thành công',
+            'Lấy danh sách user thành công CỐC',
             200
         );
     }),

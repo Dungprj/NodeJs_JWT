@@ -4,9 +4,8 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
 const AppError = require('../../utils/appError');
 const User = require('./user');
-const CastRegister = require('./cashregister');
-const Branch = sequelize.define(
-    'Branch',
+const ProductReturn = sequelize.define(
+    'ProductReturn',
     {
         id: {
             allowNull: false,
@@ -14,15 +13,23 @@ const Branch = sequelize.define(
             primaryKey: true,
             type: DataTypes.INTEGER
         },
-        name: {
+        date: {
+            type: DataTypes.DATE
+        },
+        reference_no: {
             type: DataTypes.STRING
         },
-        branch_type: {
-            type: DataTypes.ENUM('Retail', 'Restaurant'),
-            allowNull: true
-        },
-        branch_manager: {
+        vendor_id: {
             type: DataTypes.INTEGER
+        },
+        customer_id: {
+            type: DataTypes.INTEGER
+        },
+        return_note: {
+            type: DataTypes.TEXT
+        },
+        staff_note: {
+            type: DataTypes.TEXT
         },
         created_by: {
             type: DataTypes.INTEGER
@@ -36,8 +43,8 @@ const Branch = sequelize.define(
     },
     {
         freezeTableName: true,
-        modelName: 'Branch',
-        tableName: 'branches', // Chỉ định rõ tên bảng
+        modelName: 'ProductReturn',
+        tableName: 'products_returns', // Chỉ định rõ tên bảng
         timestamps: true, // Bật tự động quản lý timestamps
         createdAt: 'created_at', // Đổi tên cột createdAt mặc định
         updatedAt: 'updated_at', // Đổi tên cột updatedAt mặc định
@@ -45,29 +52,4 @@ const Branch = sequelize.define(
     }
 );
 
-Branch.hasMany(CastRegister, {
-    foreignKey: 'branch_id',
-    as: 'branchCashRegister'
-});
-
-Branch.belongsTo(User, {
-    foreignKey: 'branch_manager',
-    as: 'BranchUser'
-});
-
-CastRegister.belongsTo(Branch, {
-    foreignKey: 'branch_id',
-    as: 'cash_register_branch',
-    onDelete: 'CASCADE',
-    onUpdate: 'CASCADE'
-});
-
-// Quan hệ với User
-Branch.belongsTo(User, {
-    foreignKey: 'created_by',
-    as: 'creator',
-    onDelete: 'CASCADE',
-    onUpdate: 'CASCADE'
-});
-
-module.exports = Branch;
+module.exports = ProductReturn;

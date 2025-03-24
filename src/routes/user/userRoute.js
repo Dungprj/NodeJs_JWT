@@ -13,7 +13,11 @@ const CashRegisterRoutes = require('./cashRegisterRoute/cashRegisterRoute');
 const userProfileRoutes = require('./userProfileRoute/userProfileRoute');
 const userManagerRoutes = require('./managerUserRoute/managerUserRoute');
 const vendorRoutes = require('./vendorRoute/vendorRoute');
+const customerRoutes = require('./customerRoute/customerRoute');
+const productReturnRoutes = require('./productReturnRoute/productReturnRoute');
+
 const invoicePurcharseRoutes = require('./invoicePurchaseRoute/invoicePurchaseRoute');
+const invoiceSaleRoutes = require('./invoiceSaleRoute/invoiceSaleRoute');
 
 const routerUser = express.Router();
 
@@ -29,7 +33,11 @@ routerUser.use('/permission', permissionRoutes);
 routerUser.use('/cashRegister', CashRegisterRoutes);
 routerUser.use('/managerUser', userManagerRoutes);
 routerUser.use('/purchase', invoicePurcharseRoutes);
+routerUser.use('/sale', invoiceSaleRoutes);
 routerUser.use('/vendor', vendorRoutes);
+routerUser.use('/customer', customerRoutes);
+routerUser.use('/productReturn', productReturnRoutes);
+
 routerUser.use('/', userProfileRoutes);
 
 module.exports = routerUser;

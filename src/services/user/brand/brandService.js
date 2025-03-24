@@ -26,13 +26,12 @@ const brandService = {
 
     // Tạo thương hiệu mới (201 Created | 400 Bad Request)
     createBrand: async (data, user) => {
-        if (!data.name || !data.slug) {
+        if (!data.name) {
             throw new AppError('Tên thương hiệu và slug là bắt buộc', 400);
         }
 
         const newBrand = await Brand.create({
             name: data.name,
-            slug: data.slug,
             created_by: user.id
         });
 

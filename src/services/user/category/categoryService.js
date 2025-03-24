@@ -2,19 +2,7 @@ require('dotenv').config();
 const Category = require('../../../db/models/category');
 const AppError = require('../../../utils/appError');
 
-// Hàm chuyển đổi chuỗi thành slug
-const generateSlug = str => {
-    // Chuyển thành chữ thường
-    str = str.toLowerCase();
-    // Thay thế các ký tự có dấu thành không dấu
-    str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    // Thay khoảng trắng bằng dấu gạch nối và giữ nguyên số
-    // Xóa các ký tự đặc biệt không mong muốn (nếu có), giữ nguyên chữ cái, số và dấu
-    str = str.replace(/\s+/g, '-');
-    // // Xóa các dấu gạch nối dư thừa
-    str = str.replace(/\-\-+/g, '-').trim();
-    return str;
-};
+const commom = require('../../../common/common');
 
 const categoryService = {
     // Lấy tất cả danh mục của user (200 OK | 404 Not Found)
@@ -47,18 +35,18 @@ const categoryService = {
 
         const categories = await Category.findAll({
             where: {
-                slug: generateSlug(data.name),
+                slug: commom.generateSlug(data.name),
                 created_by: user.id
             }
         });
 
-        if (categories) {
-            throw new AppError('Tên danh mục đã tồn tại');
+        if (categories && categories.length > 0) {
+            throw new AppError('Tên danh mục đã tồn tại', 400);
         }
 
         const newCategory = await Category.create({
             name: data.name,
-            slug: generateSlug(data.name),
+            slug: commom.generateSlug(data.name),
             created_by: user.id
         });
 
@@ -71,9 +59,17 @@ const categoryService = {
         if (!category) {
             throw new AppError('Không tìm thấy danh mục để cập nhật', 404);
         }
+        const isExistCategory = await Category.findAll({
+            where: {
+                slug: commom.generateSlug(data.name)
+            }
+        });
+
+        if (isExistCategory) {
+            throw new AppError('danh mục đã tồn tại', 400);
+        }
 
         if (data.name) category.name = data.name;
-        if (data.slug) category.slug = data.slug;
 
         await category.save();
         return category;

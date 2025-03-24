@@ -38,9 +38,15 @@ const InvoicePurchase = sequelize.define(
             defaultValue: 0 // DEFAULT 0
         },
         status: {
-            type: DataTypes.ENUM(0, 1, 2),
-            allowNull: false, // NOT NULL
-            defaultValue: 0 // DEFAULT 0
+            type: DataTypes.TINYINT,
+            allowNull: false,
+            defaultValue: 0,
+            validate: {
+                isIn: {
+                    args: [[0, 1, 2]],
+                    msg: 'Giá trị status phải là 0, 1 hoặc 2'
+                }
+            }
         },
         created_by: {
             type: DataTypes.INTEGER,

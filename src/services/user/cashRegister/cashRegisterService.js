@@ -44,10 +44,13 @@ const cashRegisterService = {
         if (!data.name) {
             throw new AppError('Tên quầy thu ngân là bắt buộc', 400);
         }
+        if (!data.branch_id) {
+            throw new AppError('Chi nhánh là bắt buộc', 400);
+        }
 
         const newCashRegister = await CashRegister.create({
             name: data.name,
-            branch_id: data.branch_id || 0,
+            branch_id: data.branch_id,
             created_by: user.id
         });
 

@@ -1,5 +1,6 @@
 require('dotenv').config();
 const Branch = require('../../../db/models/branch');
+const CastRegister = require('../../../db/models/cashregister');
 const User = require('../../../db/models/user');
 
 const AppError = require('../../../utils/appError');
@@ -29,6 +30,16 @@ const branchService = {
     // Lấy tất cả chi nhánh của user (200 OK | 404 Not Found)
     getAllBranches: async user => {
         const branches = await Branch.findAll({
+            include: [
+                {
+                    model: CastRegister,
+                    as: 'branchCashRegister'
+                },
+                {
+                    model: User,
+                    as: 'BranchUser'
+                }
+            ],
             where: { created_by: user.id }
         });
 

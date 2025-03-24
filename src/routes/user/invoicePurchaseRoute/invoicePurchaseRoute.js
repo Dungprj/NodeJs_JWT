@@ -1,35 +1,35 @@
 const express = require('express');
 const invoicePurcharseController = require('../../../controllers/user/invoicePurchase/invoicePurchaseController');
 const checkPermission = require('../../../middleware/permission');
-const categoryRoute = express.Router();
+const invoicePurchaseRoute = express.Router();
 
 //Enum permission
 const PERMISSION = require('../../../utils/permission');
 
-categoryRoute.get(
+invoicePurchaseRoute.get(
     '/',
     checkPermission(PERMISSION.MANAGE_PURCHASES),
     invoicePurcharseController.getListInvoicePurchase
 );
-categoryRoute.get(
+invoicePurchaseRoute.get(
     '/:id',
     checkPermission(PERMISSION.MANAGE_PURCHASES),
     invoicePurcharseController.getInvoicePurchaseById
 );
-categoryRoute.post(
+invoicePurchaseRoute.post(
     '/',
     checkPermission(PERMISSION.MANAGE_PURCHASES),
     invoicePurcharseController.createInvoicePurchase
 );
-categoryRoute.put(
+invoicePurchaseRoute.put(
     '/:id',
     checkPermission(PERMISSION.MANAGE_PURCHASES),
     invoicePurcharseController.updateInvoicePurchase
 );
-categoryRoute.delete(
+invoicePurchaseRoute.delete(
     '/:id',
     checkPermission(PERMISSION.MANAGE_PURCHASES),
     invoicePurcharseController.deleteInvoicePurchase
 );
 
-module.exports = categoryRoute;
+module.exports = invoicePurchaseRoute;

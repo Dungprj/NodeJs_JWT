@@ -7,6 +7,8 @@ const cors = require('cors');
 const middleware = require('./middleware/auth');
 const authRoutes = require('./routes/common/auth');
 const userRoutes = require('./routes/user/userRoute');
+const adminRoutes = require('./routes/admin/adminRoute');
+
 const globalErrorHandler = require('./controllers/common/errorController');
 const AppError = require('./utils/appError');
 const path = require('path');
@@ -29,6 +31,7 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use(`/${uploadFolder}`, express.static(path.join(__dirname, uploadFolder)));
 // Routes
 app.use('/v1/auth/', authRoutes); // Không cần auth middleware
+app.use('/v1/admin', middleware.auth, adminRoutes); // Bảo vệ route user
 app.use('/v1/user', middleware.auth, userRoutes); // Bảo vệ route user
 
 // Xử lý 404

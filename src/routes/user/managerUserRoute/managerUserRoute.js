@@ -24,6 +24,6 @@ userRoute.patch('/:id/active', userProfileController.handleActiveUser); // Cập
 userRoute.patch('/:id/password', userProfileController.setAgainPassword); // Đặt lại mật khẩu
 
 // Xóa user
-// userRoute.delete('/:id', userProfileController.deleteUser);
+// userRoute.delete('/:id', userProfileController.delete);
 
 module.exports = userRoute;

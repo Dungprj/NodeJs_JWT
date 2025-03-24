@@ -88,8 +88,8 @@ const productService = {
     // Tạo sản phẩm mới
     createProductPost: async (data, user) => {
         // Kiểm tra các trường bắt buộc
-        if (!data.name || !data.slug || !data.sale_price) {
-            throw new AppError('Tên, slug và giá bán là bắt buộc', 400);
+        if (!data.name || !data.sale_price) {
+            throw new AppError('Tên và giá bán là bắt buộc', 400);
         }
 
         // Kiểm tra và lưu ảnh nếu có
