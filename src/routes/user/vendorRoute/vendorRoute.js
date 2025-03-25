@@ -5,7 +5,7 @@ const checkPlanLimits = require('../../../middleware/checkPlanLimits');
 
 const vendorRoutes = express.Router();
 
-vendorRoutes.get('/', checkPlanLimits, vendorController.getListVendor);
+vendorRoutes.get('/', vendorController.getListVendor);
 vendorRoutes.post('/', vendorController.createVendor);
 vendorRoutes.put('/:id', vendorController.updateVendor);
 vendorRoutes.delete('/:id', vendorController.updateVendor);

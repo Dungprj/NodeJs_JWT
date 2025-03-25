@@ -36,7 +36,9 @@ app.use('/v1/user', middleware.auth, userRoutes); // Bảo vệ route user
 
 // Xử lý 404
 app.use('*', (req, res, next) => {
-    throw new AppError(`Can't find ${req.originalUrl} on this server`, 404);
+    return next(
+        new AppError(`Can't find ${req.originalUrl} on this server`, 404)
+    );
 });
 
 // Xử lý lỗi toàn cục
