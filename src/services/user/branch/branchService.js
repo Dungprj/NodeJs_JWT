@@ -4,9 +4,11 @@ const CastRegister = require('../../../db/models/cashregister');
 const User = require('../../../db/models/user');
 
 const AppError = require('../../../utils/appError');
-
+const commom = require('../../../common/common');
 const branchService = {
-    getInitBranch: async user => {
+    // parent_id
+
+    getInitBranch: async id => {
         const branchType = [
             {
                 name: 'Retail'
@@ -18,7 +20,7 @@ const branchService = {
 
         const userManagerBranch = await User.findAll({
             where: {
-                parent_id: user.id
+                parent_id: id
             }
         });
 
@@ -28,7 +30,7 @@ const branchService = {
         };
     },
     // Lấy tất cả chi nhánh của user (200 OK | 404 Not Found)
-    getAllBranches: async user => {
+    getAllBranches: async id => {
         const branches = await Branch.findAll({
             include: [
                 {
@@ -40,12 +42,8 @@ const branchService = {
                     as: 'BranchUser'
                 }
             ],
-            where: { created_by: user.id }
+            where: { created_by: id }
         });
-
-        if (!branches) {
-            throw new AppError('Danh sách chi nhánh không tồn tại', 404);
-        }
 
         return branches;
     },
@@ -60,9 +58,17 @@ const branchService = {
     },
 
     // Tạo chi nhánh mới (201 Created | 400 Bad Request)
-    createBranch: async (data, user) => {
+    createBranch: async (data, id) => {
         if (!data.name) {
             throw new AppError('Tên chi nhánh là bắt buộc', 400);
+        }
+        // Kiểm tra xem tên chi nhánh đã tồn tại chưa
+        const existingBranch = await Branch.findOne({
+            where: { name: data.name }
+        });
+
+        if (existingBranch) {
+            throw new AppError('Branch with this name already exists.', 409); // Ném lỗi nếu đã tồn tại
         }
 
         // Kiểm tra branch_type nếu được cung cấp
@@ -80,7 +86,7 @@ const branchService = {
             name: data.name,
             branch_type: data.branch_type || null,
             branch_manager: data.branch_manager || 0,
-            created_by: user.id,
+            created_by: id,
             image: data.image || null
         });
 
@@ -94,7 +100,14 @@ const branchService = {
             throw new AppError('Không tìm thấy chi nhánh để cập nhật', 404);
         }
 
-        if (data.name) branch.name = data.name;
+        const existingBranch = await Branch.findOne({
+            where: { name: data.name }
+        });
+
+        if (existingBranch) {
+            throw new AppError('chi nhánh đã tồn tại', 409);
+        }
+
         if (
             data.branch_type &&
             ['Retail', 'Restaurant'].includes(data.branch_type)
@@ -103,7 +116,6 @@ const branchService = {
         }
         if (data.branch_manager !== undefined)
             branch.branch_manager = data.branch_manager;
-        if (data.image !== undefined) branch.image = data.image;
 
         await branch.save();
         return branch;

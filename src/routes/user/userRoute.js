@@ -38,6 +38,6 @@ routerUser.use('/vendor', vendorRoutes);
 routerUser.use('/customer', customerRoutes);
 routerUser.use('/productReturn', productReturnRoutes);
 
-routerUser.use('/', userProfileRoutes);
+routerUser.use('/profile', userProfileRoutes);
 
 module.exports = routerUser;

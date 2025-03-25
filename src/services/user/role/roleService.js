@@ -97,7 +97,7 @@ const groupByLastWord = arr => {
 };
 
 const roleService = {
-    getListRole: async user => {
+    getListRole: async idQuery => {
         const roles = await Role.findAll({
             attributes: ['id', 'name'],
             include: [
@@ -114,7 +114,7 @@ const roleService = {
                     }
                 }
             ],
-            where: { created_by: user.id },
+            where: { created_by: idQuery },
             raw: false
         });
 
@@ -124,14 +124,14 @@ const roleService = {
 
         return roles;
     },
-    createRole: async (data, user) => {
+    createRole: async (data, idQuery) => {
         // Bắt đầu transaction để đảm bảo toàn vẹn dữ liệu
         const result = await sequelize.transaction(async t => {
             // 1. Tạo role
             const newRole = await Role.create(
                 {
                     name: data.name,
-                    created_by: user.id,
+                    created_by: idQuery,
                     guard_name: data.guard_name
                 },
                 { transaction: t }
@@ -170,7 +170,7 @@ const roleService = {
 
         return result;
     },
-    updatePermissionsForRole: async (user, roleId, data) => {
+    updatePermissionsForRole: async (idQuery, roleId, data) => {
         const { permissions: permissionIds, name } = data; // Destructure data
 
         // Kiểm tra đầu vào
@@ -187,7 +187,7 @@ const roleService = {
             }
 
             // 2. Kiểm tra quyền sở hữu
-            if (role.created_by !== user.id) {
+            if (role.created_by !== idQuery) {
                 throw new AppError(
                     'You are not authorized to update this role',
                     403
@@ -247,7 +247,7 @@ const roleService = {
         };
     },
 
-    deleteRole: async (roleId, user) => {
+    deleteRole: async (roleId, idQuery) => {
         await sequelize.transaction(async t => {
             // 1. Tìm role cần xóa
             const role = await Role.findByPk(roleId, { transaction: t });
@@ -256,7 +256,7 @@ const roleService = {
             }
 
             // 2. Kiểm tra quyền sở hữu (nếu cần)
-            if (role.created_by !== user.id) {
+            if (role.created_by !== idQuery) {
                 throw new AppError(
                     'You are not authorized to delete this role',
                     403

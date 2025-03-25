@@ -4,8 +4,8 @@ const customerService = require('../../../services/user/customer/customerService
 
 const customerController = {
     getListCustomer: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const customers = await customerService.getAllCustomers(userCurrent);
+        const idQuery = req.idQuery;
+        const customers = await customerService.getAllCustomers(idQuery);
         return ApiResponse.success(
             res,
             customers,
@@ -25,10 +25,10 @@ const customerController = {
     }),
 
     createCustomer: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const newCustomer = await customerService.createCustomer(
             req.body,
-            userCurrent
+            idQuery
         );
         return ApiResponse.success(
             res,
@@ -39,11 +39,11 @@ const customerController = {
     }),
 
     updateCustomer: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const updatedCustomer = await customerService.updateCustomer(
             req.params.id,
             req.body,
-            userCurrent
+            idQuery
         );
         return ApiResponse.success(
             res,
@@ -54,8 +54,8 @@ const customerController = {
     }),
 
     deleteCustomer: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        await customerService.deleteCustomer(req.params.id, userCurrent);
+        const idQuery = req.idQuery;
+        await customerService.deleteCustomer(req.params.id, idQuery);
         return ApiResponse.success(
             res,
             null,

@@ -4,9 +4,9 @@ const cashRegisterService = require('../../../services/user/cashRegister/cashReg
 
 const cashRegisterController = {
     getListCashRegisters: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const cashRegisters = await cashRegisterService.getAllCashRegisters(
-            userCurrent
+            idQuery
         );
         return ApiResponse.success(
             res,
@@ -17,9 +17,9 @@ const cashRegisterController = {
     }),
 
     getCashRegisterInit: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const cashRegistersInit = await cashRegisterService.getCashRegisterInit(
-            userCurrent
+            idQuery
         );
         return ApiResponse.success(
             res,
@@ -42,10 +42,10 @@ const cashRegisterController = {
     }),
 
     createCashRegister: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const newCashRegister = await cashRegisterService.createCashRegister(
             req.body,
-            userCurrent
+            idQuery
         );
         return ApiResponse.success(
             res,

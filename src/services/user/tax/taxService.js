@@ -4,9 +4,9 @@ const AppError = require('../../../utils/appError');
 
 const taxService = {
     // Lấy tất cả thuế của user (200 OK | 404 Not Found)
-    getAllTaxes: async user => {
+    getAllTaxes: async idQuery => {
         const taxes = await Tax.findAll({
-            where: { created_by: user.id }
+            where: { created_by: idQuery }
         });
 
         if (!taxes) {
@@ -26,7 +26,7 @@ const taxService = {
     },
 
     // Tạo thuế mới (201 Created | 400 Bad Request)
-    createTax: async (data, user) => {
+    createTax: async (data, idQuery) => {
         if (!data.name || !data.percentage) {
             throw new AppError('Tên thuế và phần trăm thuế là bắt buộc', 400);
         }
@@ -35,7 +35,7 @@ const taxService = {
             name: data.name,
             percentage: data.percentage,
             is_default: data.is_default || 0,
-            created_by: user.id
+            created_by: idQuery
         });
         return newTax;
     },

@@ -3,9 +3,6 @@ const userProfileController = require('../../../controllers/user/profile/userPro
 
 const userProfileRoute = express.Router();
 
-userProfileRoute.get('/', userProfileController.getListUser);
-userProfileRoute.get('/:id', userProfileController.getuserById);
-userProfileRoute.delete('/:id', userProfileController.deleteUser);
-userProfileRoute.put('/:id', userProfileController.updateUser);
-
+userProfileRoute.get('/', userProfileController.getProfile);
+userProfileRoute.put('/', userProfileController.updateProfile);
 module.exports = userProfileRoute;

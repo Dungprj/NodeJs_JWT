@@ -4,9 +4,9 @@ const AppError = require('../../../utils/appError');
 
 const customerService = {
     // Lấy tất cả khách hàng của user (200 OK | 404 Not Found)
-    getAllCustomers: async user => {
+    getAllCustomers: async id => {
         const customers = await Customer.findAll({
-            where: { created_by: user.id }
+            where: { created_by: id }
         });
 
         if (!customers || customers.length === 0) {
@@ -26,7 +26,7 @@ const customerService = {
     },
 
     // Tạo khách hàng mới (201 Created | 400 Bad Request)
-    createCustomer: async (data, user) => {
+    createCustomer: async (data, id) => {
         // Kiểm tra các trường bắt buộc
         if (!data.name || !data.email || !data.phone_number) {
             throw new AppError('Tên, email và số điện thoại là bắt buộc', 400);
@@ -36,12 +36,12 @@ const customerService = {
         const existingCustomer = await Customer.findOne({
             where: {
                 email: data.email,
-                created_by: user.id
+                created_by: id
             }
         });
 
         if (existingCustomer) {
-            throw new AppError('Email đã tồn tại', 400);
+            throw new AppError('Email đã tồn tại', 409);
         }
 
         // Tạo khách hàng mới
@@ -55,17 +55,17 @@ const customerService = {
             country: data.country || null,
             zipcode: data.zipcode || null,
             is_active: data.is_active !== undefined ? data.is_active : 0,
-            created_by: user.id
+            created_by: id
         });
         return newCustomer;
     },
 
     // Cập nhật khách hàng (200 OK | 404 Not Found | 400 Bad Request)
-    updateCustomer: async (id, data, user) => {
+    updateCustomer: async (id, data, idQuery) => {
         const customer = await Customer.findOne({
             where: {
                 id: id,
-                created_by: user.id
+                created_by: idQuery
             }
         });
         if (!customer) {
@@ -77,12 +77,12 @@ const customerService = {
             const existingCustomer = await Customer.findOne({
                 where: {
                     email: data.email,
-                    created_by: user.id,
+                    created_by: idQuery,
                     id: { [Op.ne]: id } // Không tính chính khách hàng đang cập nhật
                 }
             });
             if (existingCustomer) {
-                throw new AppError('Email đã tồn tại', 400);
+                throw new AppError('Email đã tồn tại', 409);
             }
             customer.email = data.email;
         }
@@ -102,11 +102,11 @@ const customerService = {
     },
 
     // Xóa khách hàng (204 No Content | 404 Not Found)
-    deleteCustomer: async (id, user) => {
+    deleteCustomer: async (id, idQuery) => {
         const customer = await Customer.findOne({
             where: {
                 id: id,
-                created_by: user.id
+                created_by: idQuery
             }
         });
         if (!customer) {

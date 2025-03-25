@@ -4,8 +4,8 @@ const brandService = require('../../../services/user/brand/brandService');
 
 const brandController = {
     getListBrand: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const brands = await brandService.getAllBrands(userCurrent);
+        const idQuery = req.idQuery;
+        const brands = await brandService.getAllBrands(idQuery);
         return ApiResponse.success(
             res,
             brands,
@@ -25,8 +25,8 @@ const brandController = {
     }),
 
     createBrand: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const newBrand = await brandService.createBrand(req.body, userCurrent);
+        const idQuery = req.idQuery;
+        const newBrand = await brandService.createBrand(req.body, idQuery);
         return ApiResponse.success(
             res,
             newBrand,

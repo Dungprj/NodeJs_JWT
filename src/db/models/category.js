@@ -4,6 +4,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
 const AppError = require('../../utils/appError');
 const User = require('./user');
+const commom = require('../../common/common');
 const Category = sequelize.define(
     'Category',
     {
@@ -18,7 +19,7 @@ const Category = sequelize.define(
             type: DataTypes.STRING
         },
         slug: {
-            allowNull: false,
+            allowNull: true,
             type: DataTypes.STRING
         },
         created_by: {
@@ -38,7 +39,16 @@ const Category = sequelize.define(
         timestamps: true, // Bật tự động quản lý timestamps
         createdAt: 'created_at', // Đổi tên cột createdAt mặc định
         updatedAt: 'updated_at', // Đổi tên cột updatedAt mặc định
-        underscored: false // Giữ nguyên tên cột có dấu gạch dưới (ví dụ: userId, refreshToken)
+        underscored: false, // Giữ nguyên tên cột có dấu gạch dưới (ví dụ: userId, refreshToken)
+        hooks: {
+            beforeCreate: async Category => {
+                Category.slug = commom.generateSlug(Category.name);
+            },
+
+            beforeUpdate: async Category => {
+                Category.slug = commom.generateSlug(Category.name);
+            }
+        }
     }
 );
 

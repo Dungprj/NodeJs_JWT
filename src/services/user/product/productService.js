@@ -11,7 +11,7 @@ const {
 
 const productService = {
     // Lấy tất cả sản phẩm
-    getAllProducts: async user => {
+    getAllProducts: async id => {
         return await Product.findAll({
             include: [
                 // { model: Tax, as: 'tax' },
@@ -23,7 +23,7 @@ const productService = {
             order: [['created_at', 'DESC']],
 
             where: {
-                created_by: user.id
+                created_by: id
             }
         });
     },
@@ -46,32 +46,32 @@ const productService = {
         return product;
     },
 
-    ProductGetInit: async user => {
+    ProductGetInit: async id => {
         let result = [];
 
         const resultTax = await Tax.findAll({
             attributes: ['id', 'name'],
             where: {
-                created_by: user.id
+                created_by: id
             }
         });
         const resultUnit = await Unit.findAll({
             attributes: ['id', 'name'],
             where: {
-                created_by: user.id
+                created_by: id
             }
         });
         const resultCategory = await Category.findAll({
             attributes: ['id', 'name'],
             where: {
-                created_by: user.id
+                created_by: id
             }
         });
 
         const resultBrand = await Brand.findAll({
             attributes: ['id', 'name'],
             where: {
-                created_by: user.id
+                created_by: id
             }
         });
 
@@ -86,7 +86,7 @@ const productService = {
     },
 
     // Tạo sản phẩm mới
-    createProductPost: async (data, user) => {
+    createProductPost: async (data, id) => {
         // Kiểm tra các trường bắt buộc
         if (!data.name || !data.sale_price) {
             throw new AppError('Tên và giá bán là bắt buộc', 400);
@@ -97,19 +97,17 @@ const productService = {
 
         return await Product.create({
             name: data.name,
-            slug: data.slug,
             sku: data.sku || null,
             purchase_price: data.purchase_price || 0,
             sale_price: data.sale_price,
             description: data.description || '',
-
             tax_id: data.tax_id,
             unit_id: data.unit_id,
             category_id: data.category_id,
             brand_id: data.brand_id,
             image: image, // Lưu tên ảnh vào DB nếu có
             product_type: data.product_type || 0,
-            created_by: user.id
+            created_by: id
         });
     },
 
@@ -128,7 +126,6 @@ const productService = {
 
         return await product.update({
             name: data.name || product.name,
-            slug: data.slug || product.slug,
             sku: data.sku !== undefined ? data.sku : product.sku,
             purchase_price:
                 data.purchase_price !== undefined

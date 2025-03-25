@@ -5,9 +5,9 @@ const productReturnService = require('../../../services/user/productReturn/produ
 const productReturnController = {
     // Lấy tất cả phiếu trả hàng của user (GET /api/product-returns)
     getListProductReturn: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const productReturns = await productReturnService.getAllProductReturns(
-            userCurrent
+            idQuery
         );
         return ApiResponse.success(
             res,
@@ -32,10 +32,10 @@ const productReturnController = {
 
     // Tạo phiếu trả hàng mới (POST /api/product-returns)
     createProductReturn: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const newProductReturn = await productReturnService.createProductReturn(
             req.body,
-            userCurrent
+            idQuery
         );
         return ApiResponse.success(
             res,
@@ -47,12 +47,12 @@ const productReturnController = {
 
     // Cập nhật phiếu trả hàng (PUT /api/product-returns/:id)
     updateProductReturn: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const updatedProductReturn =
             await productReturnService.updateProductReturn(
                 req.params.id,
                 req.body,
-                userCurrent
+                idQuery
             );
         return ApiResponse.success(
             res,
@@ -64,11 +64,8 @@ const productReturnController = {
 
     // Xóa phiếu trả hàng (DELETE /api/product-returns/:id)
     deleteProductReturn: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        await productReturnService.deleteProductReturn(
-            req.params.id,
-            userCurrent
-        );
+        const idQuery = req.idQuery;
+        await productReturnService.deleteProductReturn(req.params.id, idQuery);
         return ApiResponse.success(
             res,
             null,

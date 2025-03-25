@@ -5,6 +5,7 @@ const sequelize = require('../../config/database');
 const AppError = require('../../utils/appError');
 const User = require('./user');
 const CastRegister = require('./cashregister');
+const commom = require('../../common/common');
 const Branch = sequelize.define(
     'Branch',
     {

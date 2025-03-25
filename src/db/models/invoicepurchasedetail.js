@@ -80,7 +80,7 @@ InvoicePurchaseDetail.addHook('beforeCreate', async (detail, options) => {
         transaction: options.transaction
     });
     if (existingDetail) {
-        throw new AppError('Sản phẩm đã tồn tại trong hóa đơn này', 400);
+        throw new AppError('Sản phẩm đã tồn tại trong hóa đơn này', 409);
     }
 });
 

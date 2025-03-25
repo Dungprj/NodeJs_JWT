@@ -71,14 +71,31 @@ const middleware = {
             throw new AppError('expired access token ', 413);
         }
         //check isvalid access token
-        jwt.verify(token, process.env.JWT_ACCESS_SECRET, async (err, user) => {
-            if (err) {
-                return next(new AppError('Error verify token', 400));
-            }
+        jwt.verify(
+            token,
+            process.env.JWT_ACCESS_SECRET,
+            async (err, payload) => {
+                //user trong đây là kết quả của việc giải mã thông tin đã mã hóa trong lúc tạo token
+                if (err) {
+                    return next(new AppError('Error verify token', 400));
+                }
 
-            req.user = user;
-            req.type = user.type;
-        });
+                req.user = payload;
+                req.type = payload.type;
+                req.typeParent = payload.typeParent;
+
+                const isParent = payload.type == 'Owner';
+
+                if (!isParent) {
+                    req.idQuery = payload.parent_id;
+
+                    req.typeQuery = req.typeParent;
+                } else {
+                    req.idQuery = payload.id;
+                    req.typeQuery = payload.type;
+                }
+            }
+        );
 
         return next();
     })

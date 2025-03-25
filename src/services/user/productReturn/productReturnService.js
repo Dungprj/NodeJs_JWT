@@ -5,9 +5,9 @@ const AppError = require('../../../utils/appError');
 
 const productReturnService = {
     // Lấy tất cả phiếu trả hàng của user (200 OK | 404 Not Found)
-    getAllProductReturns: async user => {
+    getAllProductReturns: async id => {
         const productReturns = await ProductReturn.findAll({
-            where: { created_by: user.id }
+            where: { created_by: id }
         });
 
         if (!productReturns || productReturns.length === 0) {
@@ -27,7 +27,7 @@ const productReturnService = {
     },
 
     // Tạo phiếu trả hàng mới (201 Created | 400 Bad Request)
-    createProductReturn: async (data, user) => {
+    createProductReturn: async (data, id) => {
         // Kiểm tra các trường bắt buộc
         if (!data.date || !data.reference_no) {
             throw new AppError('Ngày và mã tham chiếu là bắt buộc', 400);
@@ -37,12 +37,12 @@ const productReturnService = {
         const existingProductReturn = await ProductReturn.findOne({
             where: {
                 reference_no: data.reference_no,
-                created_by: user.id
+                created_by: id
             }
         });
 
         if (existingProductReturn) {
-            throw new AppError('Mã tham chiếu đã tồn tại', 400);
+            throw new AppError('Mã tham chiếu đã tồn tại', 409);
         }
 
         // Tạo phiếu trả hàng mới
@@ -53,18 +53,18 @@ const productReturnService = {
             customer_id: data.customer_id || 0,
             return_note: data.return_note || null,
             staff_note: data.staff_note || null,
-            created_by: user.id
+            created_by: id
         });
 
         return newProductReturn;
     },
 
     // Cập nhật phiếu trả hàng (200 OK | 404 Not Found | 400 Bad Request)
-    updateProductReturn: async (id, data, user) => {
+    updateProductReturn: async (id, data, idQuery) => {
         const productReturn = await ProductReturn.findOne({
             where: {
                 id: id,
-                created_by: user.id
+                created_by: idQuery
             }
         });
         if (!productReturn) {
@@ -82,12 +82,12 @@ const productReturnService = {
             const existingProductReturn = await ProductReturn.findOne({
                 where: {
                     reference_no: data.reference_no,
-                    created_by: user.id,
+                    created_by: idQuery,
                     id: { [Op.ne]: id } // Không tính chính phiếu trả hàng đang cập nhật
                 }
             });
             if (existingProductReturn) {
-                throw new AppError('Mã tham chiếu đã tồn tại', 400);
+                throw new AppError('Mã tham chiếu đã tồn tại', 409);
             }
             productReturn.reference_no = data.reference_no;
         }
@@ -108,11 +108,11 @@ const productReturnService = {
     },
 
     // Xóa phiếu trả hàng (204 No Content | 404 Not Found)
-    deleteProductReturn: async (id, user) => {
+    deleteProductReturn: async (id, idQuery) => {
         const productReturn = await ProductReturn.findOne({
             where: {
                 id: id,
-                created_by: user.id
+                created_by: idQuery
             }
         });
         if (!productReturn) {

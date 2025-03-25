@@ -5,9 +5,9 @@ const invoiceSaleService = require('../../../services/user/invoiceSale/invoiceSa
 const invoiceSaleController = {
     // Lấy tất cả hóa đơn bán hàng của user (GET /api/invoice-sales)
     getListInvoiceSale: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const invoiceSales = await invoiceSaleService.getAllInvoiceSales(
-            userCurrent
+            idQuery
         );
         return ApiResponse.success(
             res,
@@ -19,9 +19,9 @@ const invoiceSaleController = {
 
     // Lấy hóa đơn bán hàng theo ID (GET /api/invoice-sales/:id)
     getInvoiceSaleById: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const invoiceSale = await invoiceSaleService.getInvoiceSaleById(
-            userCurrent,
+            idQuery,
             req.params.id
         );
         return ApiResponse.success(
@@ -34,10 +34,10 @@ const invoiceSaleController = {
 
     // Tạo hóa đơn bán hàng mới (POST /api/invoice-sales)
     createInvoiceSale: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const newInvoiceSale = await invoiceSaleService.createInvoiceSale(
             req.body,
-            userCurrent
+            idQuery
         );
         return ApiResponse.success(
             res,
@@ -49,11 +49,11 @@ const invoiceSaleController = {
 
     // Cập nhật hóa đơn bán hàng (PUT /api/invoice-sales/:id)
     updateInvoiceSale: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const updatedInvoiceSale = await invoiceSaleService.updateInvoiceSale(
             req.params.id,
             req.body,
-            userCurrent
+            idQuery
         );
         return ApiResponse.success(
             res,
@@ -65,8 +65,8 @@ const invoiceSaleController = {
 
     // Xóa hóa đơn bán hàng (DELETE /api/invoice-sales/:id)
     deleteInvoiceSale: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        await invoiceSaleService.deleteInvoiceSale(req.params.id, userCurrent);
+        const idQuery = req.idQuery;
+        await invoiceSaleService.deleteInvoiceSale(req.params.id, idQuery);
         return ApiResponse.success(
             res,
             null,

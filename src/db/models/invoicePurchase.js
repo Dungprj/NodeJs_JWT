@@ -104,7 +104,7 @@ InvoicePurchase.addHook('beforeCreate', async (invoice, options) => {
         transaction: options.transaction
     });
     if (existingInvoice) {
-        throw new AppError('Mã hóa đơn đã tồn tại cho người dùng này', 400);
+        throw new AppError('Mã hóa đơn đã tồn tại cho người dùng này', 409);
     }
 });
 

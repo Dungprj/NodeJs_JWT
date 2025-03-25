@@ -51,7 +51,7 @@ const planService = {
             }
         });
         if (isExistPlan && isExistPlan.length > 0) {
-            throw new AppError('Tên plan đã tồn tại', 400);
+            throw new AppError('Tên plan đã tồn tại', 409);
         }
 
         // Tạo plan mới

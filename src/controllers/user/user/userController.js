@@ -4,8 +4,9 @@ const userService = require('../../../services/user/user/userService');
 
 const userController = {
     getListUser: catchAsync(async (req, res) => {
-        const user = req.user;
-        const users = await userService.getListUser(user);
+        const idQuery = req.idQuery;
+
+        const users = await userService.getListUser(idQuery);
         return ApiResponse.success(
             res,
             users,
@@ -25,8 +26,9 @@ const userController = {
     }),
 
     AddUserInit: catchAsync(async (req, res) => {
-        const user = req.user;
-        const userInit = await userService.AddUserInit(user);
+        const idQuery = req.idQuery;
+
+        const userInit = await userService.AddUserInit(idQuery);
         return ApiResponse.success(
             res,
             userInit,
@@ -37,8 +39,6 @@ const userController = {
 
     handleActiveUser: catchAsync(async (req, res) => {
         const id = req.params.id;
-
-        console.log('body: ' + JSON.stringify(req.body));
         const updatedUser = await userService.handleActiveUser(id, req.body);
 
         return ApiResponse.success(
@@ -49,8 +49,9 @@ const userController = {
         );
     }),
     addUser: catchAsync(async (req, res) => {
-        const user = req.user;
-        const newUser = await userService.addUser(user, req.body);
+        const idQuery = req.idQuery;
+
+        const newUser = await userService.addUser(idQuery, req.body);
         return ApiResponse.success(
             res,
             newUser,

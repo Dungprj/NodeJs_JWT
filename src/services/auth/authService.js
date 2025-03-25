@@ -144,8 +144,12 @@ const authService = {
             //     throw new AppError('Invalid email or password', 404);
             // }
 
-            const accessToken = authService.generateAccessToken(isExistUser);
-            const refreshToken = authService.generateRefreshToken(isExistUser);
+            const accessToken = await authService.generateAccessToken(
+                isExistUser
+            );
+            const refreshToken = await authService.generateRefreshToken(
+                isExistUser
+            );
 
             const refreshExpireAt = getExpiresAtFromDuration(
                 process.env.JWT_REFRESH_EXPIRE
@@ -208,15 +212,22 @@ const authService = {
     },
 
     // Tạo access token
-    generateAccessToken: user => {
+    generateAccessToken: async user => {
         if (!process.env.JWT_ACCESS_SECRET) {
             throw new AppError('JWT_ACCESS_SECRET is not defined', 404);
         }
         if (!process.env.JWT_ACCESS_EXPIRE) {
             throw new AppError('JWT_ACCESS_EXPIRE is not defined', 404);
         }
+
+        const UserParent = await User.findByPk(user.parent_id);
         return jwt.sign(
-            { id: user.id, type: user.type },
+            {
+                id: user.id,
+                type: user.type,
+                parent_id: user.parent_id,
+                typeParent: UserParent.type
+            },
             process.env.JWT_ACCESS_SECRET,
             {
                 expiresIn: process.env.JWT_ACCESS_EXPIRE
@@ -225,15 +236,22 @@ const authService = {
     },
 
     // Tạo refresh token
-    generateRefreshToken: user => {
+    generateRefreshToken: async user => {
         if (!process.env.JWT_REFRESH_SECRET) {
             throw new AppError('JWT_REFRESH_SECRET is not defined', 400);
         }
         if (!process.env.JWT_REFRESH_EXPIRE) {
             throw new AppError('JWT_REFRESH_EXPIRE is not defined', 400);
         }
+
+        const UserParent = await User.findByPk(user.parent_id);
         return jwt.sign(
-            { id: user.id, type: user.type },
+            {
+                id: user.id,
+                type: user.type,
+                parent_id: user.parent_id,
+                typeParent: UserParent.type
+            },
             process.env.JWT_REFRESH_SECRET,
             {
                 expiresIn: process.env.JWT_REFRESH_EXPIRE
@@ -292,8 +310,12 @@ const authService = {
             throw new AppError('User not found', 400);
         }
 
-        const newAccessToken = authService.generateAccessToken(User_Decode);
-        const newRefreshToken = authService.generateRefreshToken(User_Decode);
+        const newAccessToken = await authService.generateAccessToken(
+            User_Decode
+        );
+        const newRefreshToken = await authService.generateRefreshToken(
+            User_Decode
+        );
 
         //expireRefreshToken
         const refreshExpireAt = getExpiresAtFromDuration(

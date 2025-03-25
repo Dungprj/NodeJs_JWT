@@ -5,8 +5,9 @@ const vendorService = require('../../../services/user/vendor/vendorService');
 const vendorController = {
     // Lấy danh sách nhà cung cấp (200 OK)
     getListVendor: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const vendors = await vendorService.getAllVendors(userCurrent);
+        const idQuery = req.idQuery;
+
+        const vendors = await vendorService.getAllVendors(idQuery);
 
         return ApiResponse.success(
             res,
@@ -29,11 +30,9 @@ const vendorController = {
 
     // Tạo mới nhà cung cấp (201 Created | 400 Bad Request)
     createVendor: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const newVendor = await vendorService.createVendor(
-            req.body,
-            userCurrent
-        );
+        const idQuery = req.idQuery;
+
+        const newVendor = await vendorService.createVendor(req.body, idQuery);
 
         return ApiResponse.success(
             res,

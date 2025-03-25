@@ -4,7 +4,7 @@ const { DataTypes } = require('sequelize');
 const User = require('./user');
 const sequelize = require('../../config/database');
 const AppError = require('../../utils/appError');
-
+const commom = require('../../common/common');
 const Brand = sequelize.define(
     'Brand',
     {
@@ -37,7 +37,16 @@ const Brand = sequelize.define(
         timestamps: true, // Bật tự động quản lý timestamps
         createdAt: 'created_at', // Đổi tên cột createdAt mặc định
         updatedAt: 'updated_at', // Đổi tên cột updatedAt mặc định
-        underscored: false // Giữ nguyên tên cột có dấu gạch dưới (ví dụ: userId, refreshToken)
+        underscored: false, // Giữ nguyên tên cột có dấu gạch dưới (ví dụ: userId, refreshToken)
+        hooks: {
+            beforeCreate: async Brand => {
+                Brand.slug = commom.generateSlug(Brand.name);
+            },
+
+            beforeUpdate: async Brand => {
+                Brand.slug = commom.generateSlug(Brand.name);
+            }
+        }
     }
 );
 

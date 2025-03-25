@@ -8,6 +8,7 @@ const Tax = require('./tax');
 const Unit = require('./unit');
 const Category = require('./category');
 const Brand = require('./brand');
+const commom = require('../../common/common');
 const Product = sequelize.define(
     'Product',
     {
@@ -23,7 +24,7 @@ const Product = sequelize.define(
         },
         slug: {
             type: DataTypes.STRING(191),
-            allowNull: false
+            allowNull: true
         },
         sku: {
             type: DataTypes.STRING(191),
@@ -129,7 +130,16 @@ const Product = sequelize.define(
         timestamps: true, // Bật tự động quản lý timestamps
         createdAt: 'created_at', // Đổi tên cột createdAt mặc định
         updatedAt: 'updated_at', // Đổi tên cột updatedAt mặc định
-        underscored: false // Giữ nguyên tên cột có dấu gạch dưới (ví dụ: userId, refreshToken)
+        underscored: false, // Giữ nguyên tên cột có dấu gạch dưới (ví dụ: userId, refreshToken)
+        hooks: {
+            beforeCreate: async Product => {
+                Product.slug = commom.generateSlug(Product.name);
+            },
+
+            beforeUpdate: async Product => {
+                Product.slug = commom.generateSlug(Product.name);
+            }
+        }
     }
 );
 

@@ -4,8 +4,8 @@ const roleService = require('../../../services/user/role/roleService');
 
 const roleController = {
     getListRole: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const listRolePermission = await roleService.getListRole(userCurrent);
+        const idQuery = req.idQuery;
+        const listRolePermission = await roleService.getListRole(idQuery);
         return ApiResponse.success(
             res,
             listRolePermission,
@@ -15,9 +15,9 @@ const roleController = {
     }),
 
     createRole: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
 
-        const role = await roleService.createRole(req.body, userCurrent);
+        const role = await roleService.createRole(req.body, idQuery);
 
         return ApiResponse.success(
             res,
@@ -27,10 +27,10 @@ const roleController = {
         );
     }),
     updateRole: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
 
         const updatedRole = await roleService.updatePermissionsForRole(
-            userCurrent,
+            idQuery,
             req.params.id,
             req.body
         );
@@ -42,9 +42,9 @@ const roleController = {
         );
     }),
     deleteRole: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
 
-        await roleService.deleteRole(req.params.id, userCurrent);
+        await roleService.deleteRole(req.params.id, idQuery);
         return ApiResponse.success(
             res,
             null,

@@ -8,9 +8,9 @@ const AppError = require('../../../utils/appError');
 
 const invoiceSaleService = {
     // Lấy tất cả hóa đơn bán hàng của user (200 OK | 404 Not Found)
-    getAllInvoiceSales: async user => {
+    getAllInvoiceSales: async id => {
         const invoiceSales = await InvoiceSale.findAll({
-            where: { created_by: user.id },
+            where: { created_by: id },
             include: [
                 { model: InvoiceSaleDetail, as: 'details' } // Bao gồm chi tiết hóa đơn
             ]
@@ -27,11 +27,11 @@ const invoiceSaleService = {
     },
 
     // Lấy hóa đơn bán hàng theo ID (200 OK | 404 Not Found)
-    getInvoiceSaleById: async (user, id) => {
+    getInvoiceSaleById: async (idQuery, id) => {
         const invoiceSale = await InvoiceSale.findAll({
             include: [{ model: InvoiceSaleDetail, as: 'details' }],
             where: {
-                created_by: user.id,
+                created_by: idQuery,
                 id: id
             }
         });
@@ -42,7 +42,7 @@ const invoiceSaleService = {
     },
 
     // Tạo hóa đơn bán hàng mới (201 Created | 400 Bad Request)
-    createInvoiceSale: async (data, user) => {
+    createInvoiceSale: async (data, idQuery) => {
         if (
             !data.branchId ||
             !data.products ||
@@ -106,7 +106,7 @@ const invoiceSaleService = {
 
             // Tạo mã hóa đơn
             const lastInvoice = await InvoiceSale.findOne({
-                where: { created_by: user.id },
+                where: { created_by: idQuery },
                 order: [['id', 'DESC']],
                 transaction,
                 lock: transaction.LOCK.UPDATE
@@ -126,7 +126,7 @@ const invoiceSaleService = {
                     branch_id: data.branchId,
                     cash_register_id: data.cashRegisterId,
                     status: 0, // Giả định trạng thái mặc định
-                    created_by: user.id
+                    created_by: idQuery
                 },
                 { transaction }
             );
@@ -178,11 +178,11 @@ const invoiceSaleService = {
     },
 
     // Cập nhật hóa đơn bán hàng (200 OK | 404 Not Found | 400 Bad Request)
-    updateInvoiceSale: async (id, data, user) => {
+    updateInvoiceSale: async (id, data, idQuery) => {
         const invoiceSale = await InvoiceSale.findOne({
             where: {
                 id: id,
-                created_by: user.id
+                created_by: idQuery
             }
         });
         if (!invoiceSale) {
@@ -333,14 +333,14 @@ const invoiceSaleService = {
     },
 
     // Xóa hóa đơn bán hàng (204 No Content | 404 Not Found)
-    deleteInvoiceSale: async (id, user) => {
+    deleteInvoiceSale: async (id, idQuery) => {
         const invoiceSale = await InvoiceSale.findByPk(id);
         if (!invoiceSale) {
             throw new AppError('Không tìm thấy hóa đơn bán hàng để xóa', 404);
         }
 
         // Kiểm tra quyền truy cập
-        if (invoiceSale.created_by !== user.id) {
+        if (invoiceSale.created_by !== idQuery) {
             throw new AppError('Bạn không có quyền xóa hóa đơn này', 403);
         }
 

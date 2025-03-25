@@ -96,9 +96,7 @@ const groupByLastWord = arr => {
 };
 
 const permissionService = {
-    getListPermissionInit: async typeUser => {
-        console.log('type la : ' + typeUser);
-        console.log('--------------------------------');
+    getListPermissionInit: async typeQuery => {
         //get permissions by roleId = 2 and roleName = Onwer ngoại trừ buy plan and manager plan
         const permissions = await Permission.findAll({
             attributes: ['id', 'name'],
@@ -108,7 +106,7 @@ const permissionService = {
                     attributes: [],
                     as: 'Permission_roles',
                     where: {
-                        name: typeUser
+                        name: typeQuery
                     },
                     through: {
                         model: RolePermission,

@@ -2,11 +2,12 @@ require('dotenv').config();
 const Brand = require('../../../db/models/brand');
 const AppError = require('../../../utils/appError');
 
+const commom = require('../../../common/common');
 const brandService = {
     // Lấy tất cả thương hiệu của user (200 OK | 404 Not Found)
-    getAllBrands: async user => {
+    getAllBrands: async id => {
         const brands = await Brand.findAll({
-            where: { created_by: user.id }
+            where: { created_by: id }
         });
 
         if (!brands) {
@@ -25,14 +26,25 @@ const brandService = {
     },
 
     // Tạo thương hiệu mới (201 Created | 400 Bad Request)
-    createBrand: async (data, user) => {
+    createBrand: async (data, id) => {
         if (!data.name) {
-            throw new AppError('Tên thương hiệu và slug là bắt buộc', 400);
+            throw new AppError('Tên thương hiệu là bắt buộc', 400);
+        }
+
+        const brands = await Brand.findAll({
+            where: {
+                slug: commom.generateSlug(data.name),
+                created_by: id
+            }
+        });
+
+        if (brands && brands.length > 0) {
+            throw new AppError('Tên thương hiệu đã tồn tại', 409);
         }
 
         const newBrand = await Brand.create({
             name: data.name,
-            created_by: user.id
+            created_by: id
         });
 
         return newBrand;
@@ -46,7 +58,6 @@ const brandService = {
         }
 
         if (data.name) brand.name = data.name;
-        if (data.slug) brand.slug = data.slug;
 
         await brand.save();
         return brand;

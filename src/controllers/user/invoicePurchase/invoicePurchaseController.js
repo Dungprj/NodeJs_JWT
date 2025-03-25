@@ -5,9 +5,9 @@ const invoicePurchaseService = require('../../../services/user/invoicePurcharse/
 const invoicePurchaseController = {
     // Lấy tất cả hóa đơn nhập hàng của user (GET /api/invoice-purchases)
     getListInvoicePurchase: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const invoicePurchases =
-            await invoicePurchaseService.getAllInvoicePurchases(userCurrent);
+            await invoicePurchaseService.getAllInvoicePurchases(idQuery);
         return ApiResponse.success(
             res,
             invoicePurchases,
@@ -18,10 +18,10 @@ const invoicePurchaseController = {
 
     // Lấy hóa đơn nhập hàng theo ID (GET /api/invoice-purchases/:id)
     getInvoicePurchaseById: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const invoicePurchase =
             await invoicePurchaseService.getInvoicePurchaseById(
-                userCurrent,
+                idQuery,
                 req.params.id
             );
         return ApiResponse.success(
@@ -34,11 +34,11 @@ const invoicePurchaseController = {
 
     // Tạo hóa đơn nhập hàng mới (POST /api/invoice-purchases)
     createInvoicePurchase: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const newInvoicePurchase =
             await invoicePurchaseService.createInvoicePurchase(
                 req.body,
-                userCurrent
+                idQuery
             );
         return ApiResponse.success(
             res,
@@ -50,12 +50,12 @@ const invoicePurchaseController = {
 
     // Cập nhật hóa đơn nhập hàng (PUT /api/invoice-purchases/:id)
     updateInvoicePurchase: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const updatedInvoicePurchase =
             await invoicePurchaseService.updateInvoicePurchase(
                 req.params.id,
                 req.body,
-                userCurrent
+                idQuery
             );
         return ApiResponse.success(
             res,
@@ -67,10 +67,10 @@ const invoicePurchaseController = {
 
     // Xóa hóa đơn nhập hàng (DELETE /api/invoice-purchases/:id)
     deleteInvoicePurchase: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         await invoicePurchaseService.deleteInvoicePurchase(
             req.params.id,
-            userCurrent
+            idQuery
         );
         return ApiResponse.success(
             res,

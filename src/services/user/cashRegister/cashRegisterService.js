@@ -5,10 +5,10 @@ const Branch = require('../../../db/models/branch');
 const AppError = require('../../../utils/appError');
 
 const cashRegisterService = {
-    getCashRegisterInit: async user => {
+    getCashRegisterInit: async id => {
         const branchList = await Branch.findAll({
             where: {
-                created_by: user.id
+                created_by: id
             }
         });
 
@@ -18,9 +18,9 @@ const cashRegisterService = {
         return branchList;
     },
     // Lấy tất cả quầy thu ngân của user (200 OK | 404 Not Found)
-    getAllCashRegisters: async user => {
+    getAllCashRegisters: async id => {
         const cashRegisters = await CashRegister.findAll({
-            where: { created_by: user.id }
+            where: { created_by: id }
         });
 
         if (!cashRegisters) {
@@ -40,7 +40,7 @@ const cashRegisterService = {
     },
 
     // Tạo quầy thu ngân mới (201 Created | 400 Bad Request)
-    createCashRegister: async (data, user) => {
+    createCashRegister: async (data, id) => {
         if (!data.name) {
             throw new AppError('Tên quầy thu ngân là bắt buộc', 400);
         }
@@ -51,7 +51,7 @@ const cashRegisterService = {
         const newCashRegister = await CashRegister.create({
             name: data.name,
             branch_id: data.branch_id,
-            created_by: user.id
+            created_by: id
         });
 
         return newCashRegister;

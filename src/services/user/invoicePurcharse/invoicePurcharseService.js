@@ -8,9 +8,9 @@ const AppError = require('../../../utils/appError');
 
 const invoicePurchaseService = {
     // Lấy tất cả hóa đơn nhập hàng của user (200 OK | 404 Not Found)
-    getAllInvoicePurchases: async user => {
+    getAllInvoicePurchases: async id => {
         const invoicePurchases = await InvoicePurchase.findAll({
-            where: { created_by: user.id },
+            where: { created_by: id },
             include: [
                 { model: InvoicePurchaseDetail, as: 'details' } // Bao gồm chi tiết hóa đơn
             ]
@@ -27,11 +27,11 @@ const invoicePurchaseService = {
     },
 
     // Lấy hóa đơn nhập hàng theo ID (200 OK | 404 Not Found)
-    getInvoicePurchaseById: async (user, id) => {
+    getInvoicePurchaseById: async (idQuery, id) => {
         const invoicePurchase = await InvoicePurchase.findAll({
             include: [{ model: InvoicePurchaseDetail, as: 'details' }],
             where: {
-                created_by: user.id,
+                created_by: idQuery,
                 id: id
             }
         });
@@ -42,7 +42,7 @@ const invoicePurchaseService = {
     },
 
     // Tạo hóa đơn nhập hàng mới (201 Created | 400 Bad Request)
-    createInvoicePurchase: async (data, user) => {
+    createInvoicePurchase: async (data, idQuery) => {
         if (
             !data.branchId ||
             !data.products ||
@@ -107,7 +107,7 @@ const invoicePurchaseService = {
 
             const lastInvoice = await InvoicePurchase.findOne({
                 where: {
-                    created_by: user.id
+                    created_by: idQuery
                 },
                 order: [['id', 'DESC']],
                 transaction,
@@ -128,7 +128,7 @@ const invoicePurchaseService = {
                     branch_id: data.branchId,
                     cash_register_id: data.cashRegisterId || 0,
                     status: 0, // Giả định trạng thái mặc định
-                    created_by: user.id
+                    created_by: idQuery
                 },
                 { transaction }
             );
@@ -176,11 +176,11 @@ const invoicePurchaseService = {
     },
 
     // Cập nhật hóa đơn nhập hàng (200 OK | 404 Not Found | 400 Bad Request)
-    updateInvoicePurchase: async (id, data, user) => {
+    updateInvoicePurchase: async (id, data, idQuery) => {
         const invoicePurchase = await InvoicePurchase.findOne({
             where: {
                 id: id,
-                created_by: user.id
+                created_by: idQuery
             }
         });
         if (!invoicePurchase) {
@@ -323,14 +323,14 @@ const invoicePurchaseService = {
     },
 
     // Xóa hóa đơn nhập hàng (204 No Content | 404 Not Found)
-    deleteInvoicePurchase: async (id, user) => {
+    deleteInvoicePurchase: async (id, idQuery) => {
         const invoicePurchase = await InvoicePurchase.findByPk(id);
         if (!invoicePurchase) {
             throw new AppError('Không tìm thấy hóa đơn nhập hàng để xóa', 404);
         }
 
         // Kiểm tra quyền truy cập
-        if (invoicePurchase.created_by !== user.id) {
+        if (invoicePurchase.created_by !== idQuery) {
             throw new AppError('Bạn không có quyền xóa hóa đơn này', 403);
         }
 

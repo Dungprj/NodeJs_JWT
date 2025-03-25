@@ -6,9 +6,9 @@ const commom = require('../../../common/common');
 
 const categoryService = {
     // Lấy tất cả danh mục của user (200 OK | 404 Not Found)
-    getAllCategories: async user => {
+    getAllCategories: async id => {
         const categories = await Category.findAll({
-            where: { created_by: user.id }
+            where: { created_by: id }
         });
 
         if (!categories) {
@@ -28,7 +28,7 @@ const categoryService = {
     },
 
     // Tạo danh mục mới (201 Created | 400 Bad Request)
-    createCategory: async (data, user) => {
+    createCategory: async (data, id) => {
         if (!data.name) {
             throw new AppError('Tên danh mục là bắt buộc', 400);
         }
@@ -36,18 +36,17 @@ const categoryService = {
         const categories = await Category.findAll({
             where: {
                 slug: commom.generateSlug(data.name),
-                created_by: user.id
+                created_by: id
             }
         });
 
         if (categories && categories.length > 0) {
-            throw new AppError('Tên danh mục đã tồn tại', 400);
+            throw new AppError('Tên danh mục đã tồn tại', 409);
         }
 
         const newCategory = await Category.create({
             name: data.name,
-            slug: commom.generateSlug(data.name),
-            created_by: user.id
+            created_by: id
         });
 
         return newCategory;
@@ -65,8 +64,8 @@ const categoryService = {
             }
         });
 
-        if (isExistCategory) {
-            throw new AppError('danh mục đã tồn tại', 400);
+        if (isExistCategory && isExistCategory.length > 0) {
+            throw new AppError('danh mục đã tồn tại', 409);
         }
 
         if (data.name) category.name = data.name;

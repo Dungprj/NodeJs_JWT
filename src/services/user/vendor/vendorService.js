@@ -5,9 +5,9 @@ const AppError = require('../../../utils/appError');
 
 const vendorService = {
     // Lấy tất cả nhà cung cấp của user (200 OK | 404 Not Found)
-    getAllVendors: async user => {
+    getAllVendors: async idQuery => {
         const vendors = await Vendor.findAll({
-            where: { created_by: user.id }
+            where: { created_by: idQuery }
         });
 
         if (!vendors || vendors.length === 0) {
@@ -27,7 +27,7 @@ const vendorService = {
     },
 
     // Tạo nhà cung cấp mới (201 Created | 400 Bad Request)
-    createVendor: async (data, user) => {
+    createVendor: async (data, idQuery) => {
         //lay goi hien tai
         // lay so nha cung cap max
         if (!data.name || !data.email || !data.phone_number) {
@@ -54,7 +54,7 @@ const vendorService = {
             country: data.country || null,
             zipcode: data.zipcode || null,
             is_active: data.is_active !== undefined ? data.is_active : 0,
-            created_by: user.id
+            created_by: idQuery
         });
 
         return newVendor;

@@ -4,8 +4,8 @@ const categoryService = require('../../../services/user/category/categoryService
 
 const categoryController = {
     getListCategory: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const categories = await categoryService.getAllCategories(userCurrent);
+        const idQuery = req.idQuery;
+        const categories = await categoryService.getAllCategories(idQuery);
         return ApiResponse.success(
             res,
             categories,
@@ -25,10 +25,10 @@ const categoryController = {
     }),
 
     createCategory: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         const newCategory = await categoryService.createCategory(
             req.body,
-            userCurrent
+            idQuery
         );
         return ApiResponse.success(
             res,

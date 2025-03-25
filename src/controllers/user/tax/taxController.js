@@ -5,8 +5,9 @@ const taxService = require('../../../services/user/tax/taxService');
 const taxController = {
     // Lấy danh sách thuế (200 OK)
     getListTax: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const taxes = await taxService.getAllTaxes(userCurrent);
+        const idQuery = req.idQuery;
+
+        const taxes = await taxService.getAllTaxes(idQuery);
         return ApiResponse.success(
             res,
             taxes,
@@ -28,8 +29,9 @@ const taxController = {
 
     // Tạo thuế mới (201 Created | 400 Bad Request)
     createTax: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const newTax = await taxService.createTax(req.body, userCurrent);
+        const idQuery = req.idQuery;
+
+        const newTax = await taxService.createTax(req.body, idQuery);
         return ApiResponse.success(
             res,
             newTax,

@@ -4,8 +4,8 @@ const branchService = require('../../../services/user/branch/branchService');
 
 const branchController = {
     getInitBranch: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const branchesInit = await branchService.getInitBranch(userCurrent);
+        const idQuery = req.idQuery;
+        const branchesInit = await branchService.getInitBranch(idQuery);
         return ApiResponse.success(
             res,
             branchesInit,
@@ -14,8 +14,8 @@ const branchController = {
         );
     }),
     getListBranches: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const branches = await branchService.getAllBranches(userCurrent);
+        const idQuery = req.idQuery;
+        const branches = await branchService.getAllBranches(idQuery);
         return ApiResponse.success(
             res,
             branches,
@@ -35,11 +35,8 @@ const branchController = {
     }),
 
     createBranch: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const newBranch = await branchService.createBranch(
-            req.body,
-            userCurrent
-        );
+        const idQuery = req.idQuery;
+        const newBranch = await branchService.createBranch(req.body, idQuery);
         return ApiResponse.success(
             res,
             newBranch,

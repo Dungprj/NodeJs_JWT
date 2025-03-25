@@ -5,8 +5,9 @@ const unitService = require('../../../services/user/unit/unitService');
 const unitController = {
     // Lấy danh sách đơn vị (200 OK)
     getListUnit: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const units = await unitService.getAllUnits(userCurrent);
+        const idQuery = req.idQuery;
+
+        const units = await unitService.getAllUnits(idQuery);
 
         return ApiResponse.success(
             res,
@@ -29,8 +30,9 @@ const unitController = {
 
     // Tạo mới đơn vị (201 Created | 400 Bad Request)
     createUnit: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const newUnit = await unitService.createUnit(req.body, userCurrent);
+        const idQuery = req.idQuery;
+
+        const newUnit = await unitService.createUnit(req.body, idQuery);
 
         return ApiResponse.success(
             res,

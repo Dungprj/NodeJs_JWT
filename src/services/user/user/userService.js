@@ -8,10 +8,10 @@ const CastRegister = require('../../../db/models/cashregister');
 const AppError = require('../../../utils/appError');
 
 const userService = {
-    getListUser: async user => {
+    getListUser: async idQuery => {
         const users = await User.findAll({
             where: {
-                parent_id: user.id
+                parent_id: idQuery
             }
         });
 
@@ -44,20 +44,20 @@ const userService = {
         delete res.deletedAt;
         return res;
     },
-    AddUserInit: async user => {
+    AddUserInit: async idQuery => {
         //get danh sach vai tro cua user dang dang nhap
 
         const roleList = await Role.findAll({
             attributes: ['id', 'name'],
             where: {
-                created_by: user.id
+                created_by: idQuery
             }
         });
         //get danh sach chi nhanh user dang dang nhap
         const branchList = await Branch.findAll({
             attributes: ['id', 'name'],
             where: {
-                created_by: user.id
+                created_by: idQuery
             }
         });
 
@@ -66,7 +66,7 @@ const userService = {
         const cashRegisterList = await CastRegister.findAll({
             attributes: ['id', 'name'],
             where: {
-                created_by: user.id
+                created_by: idQuery
             }
         });
 
@@ -91,7 +91,7 @@ const userService = {
         await user.save();
         return user;
     },
-    addUser: async (user, data) => {
+    addUser: async (idQuery, data) => {
         const {
             name,
             email,
@@ -100,7 +100,7 @@ const userService = {
             address = 'ha noi',
             email_verified_at = null,
             avatar = null,
-            parent_id = user.id,
+            parent_id = idQuery,
             type,
             branch_id,
             cash_register_id,

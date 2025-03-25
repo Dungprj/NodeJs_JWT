@@ -9,8 +9,8 @@ const productController = {
     // Lấy danh sách sản phẩm (200 OK)
 
     getAllProducts: catchAsync(async (req, res, next) => {
-        const userCur = req.user;
-        const products = await productService.getAllProducts(userCur);
+        const idQuery = req.idQuery;
+        const products = await productService.getAllProducts(idQuery);
 
         if (!products.length) {
             return next(
@@ -42,8 +42,8 @@ const productController = {
         );
     }),
     ProductGetInit: catchAsync(async (req, res) => {
-        const userCurrent = req.user;
-        const products = await productService.ProductGetInit(userCurrent);
+        const idQuery = req.idQuery;
+        const products = await productService.ProductGetInit(idQuery);
         return ApiResponse.success(
             res,
             products,
@@ -53,7 +53,7 @@ const productController = {
     }),
     // Tạo mới sản phẩm (201 Created | 400 Bad Request)
     createProductPost: catchAsync(async (req, res, next) => {
-        const userCurrent = req.user;
+        const idQuery = req.idQuery;
         // Xử lý tải ảnh sản phẩm lên
         //tên key là image
         upload.single('image')(req, res, async err => {
@@ -70,7 +70,7 @@ const productController = {
             // Gọi service để tạo sản phẩm mới
             const newProduct = await productService.createProductPost(
                 newProductData,
-                userCurrent
+                idQuery
             );
 
             return ApiResponse.success(

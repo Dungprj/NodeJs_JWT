@@ -5,9 +5,9 @@ const AppError = require('../../../utils/appError');
 
 const unitService = {
     // Lấy tất cả đơn vị của user (200 OK | 404 Not Found)
-    getAllUnits: async user => {
+    getAllUnits: async idQuery => {
         const units = await Unit.findAll({
-            where: { created_by: user.id }
+            where: { created_by: idQuery }
         });
 
         if (!units) {
@@ -27,7 +27,7 @@ const unitService = {
     },
 
     // Tạo đơn vị mới (201 Created | 400 Bad Request)
-    createUnit: async (data, user) => {
+    createUnit: async (data, idQuery) => {
         if (!data.name || !data.shortname) {
             throw new AppError('Tên đơn vị và tên viết tắt là bắt buộc', 400);
         }
@@ -35,7 +35,7 @@ const unitService = {
         const newUnit = await Unit.create({
             name: data.name,
             shortname: data.shortname,
-            created_by: user.id
+            created_by: idQuery
         });
 
         return newUnit;
