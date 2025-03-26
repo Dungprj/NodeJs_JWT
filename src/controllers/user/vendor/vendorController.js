@@ -31,7 +31,7 @@ const vendorController = {
     // Tạo mới nhà cung cấp (201 Created | 400 Bad Request)
     createVendor: catchAsync(async (req, res) => {
         const idQuery = req.idQuery;
-
+        const transaction = req.transaction;
         const newVendor = await vendorService.createVendor(req.body, idQuery);
 
         return ApiResponse.success(

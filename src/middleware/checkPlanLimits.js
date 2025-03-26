@@ -113,7 +113,7 @@ const checkPlanLimits = {
                     );
                 }
 
-                req.transaction = transaction;
+                await transaction.commit();
                 next();
             }
             req.transaction = transaction;
