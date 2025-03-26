@@ -39,8 +39,7 @@ const checkPlanLimits = {
                 where: {
                     created_by: req.idQuery
                 },
-                transaction,
-                lock: transaction.LOCK.UPDATE
+                transaction
             });
 
             if (quantityVendorCurrent.length < plan.max_vendors) {
