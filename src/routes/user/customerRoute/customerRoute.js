@@ -2,6 +2,7 @@ const express = require('express');
 const customerController = require('../../../controllers/user/customer/customerController');
 const checkPermission = require('../../../middleware/permission');
 const customerRoute = express.Router();
+const checkPlanLimits = require('../../../middleware/checkPlanLimits');
 
 //Enum permission
 const PERMISSION = require('../../../utils/permission');
@@ -18,6 +19,7 @@ customerRoute.get(
 );
 customerRoute.post(
     '/',
+    checkPlanLimits.customer,
     checkPermission(PERMISSION.CREATE_CUSTOMER),
     customerController.createCustomer
 );

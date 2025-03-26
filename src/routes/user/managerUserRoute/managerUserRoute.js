@@ -1,5 +1,6 @@
 const express = require('express');
 const userProfileController = require('../../../controllers/user/user/userController');
+const checkPlanLimits = require('../../../middleware/checkPlanLimits');
 
 const userRoute = express.Router();
 
@@ -10,7 +11,7 @@ userRoute.get('/', userProfileController.getListUser);
 userRoute.get('/init', userProfileController.AddUserInit);
 
 // Tạo user mới
-userRoute.post('/', userProfileController.addUser);
+userRoute.post('/', checkPlanLimits.user, userProfileController.addUser);
 
 // Lấy thông tin user theo id
 userRoute.get('/:id', userProfileController.getuserById);
