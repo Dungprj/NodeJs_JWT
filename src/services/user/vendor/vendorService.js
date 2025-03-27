@@ -34,6 +34,17 @@ const vendorService = {
             throw new AppError('Tên, email và số điện thoại là bắt buộc', 400);
         }
 
+        const vendorExist = await Vendor.findOne({
+            where: {
+                created_by: idQuery,
+                email: data.email
+            }
+        });
+
+        if (vendorExist) {
+            throw new AppError('Email nhà cung cấp đã tồn tại', 400);
+        }
+
         // Hàm tạo slug từ name
         const generateSlug = str => {
             str = str.toLowerCase();

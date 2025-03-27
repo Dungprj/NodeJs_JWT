@@ -14,7 +14,7 @@ customerRoute.get(
 );
 customerRoute.get(
     '/:id',
-    checkPermission(PERMISSION.EDIT_CUSTOMER),
+    checkPermission(PERMISSION.MANAGE_CUSTOMER),
     customerController.getCustomerById
 );
 customerRoute.post(

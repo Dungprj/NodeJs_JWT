@@ -2,12 +2,29 @@ const express = require('express');
 const vendorController = require('../../../controllers/user/vendor/vendorController');
 const checkPermission = require('../../../middleware/permission');
 const checkPlanLimits = require('../../../middleware/checkPlanLimits');
-
+//Enum permission
+const PERMISSION = require('../../../utils/permission');
 const vendorRoutes = express.Router();
 
-vendorRoutes.get('/', vendorController.getListVendor);
-vendorRoutes.post('/', checkPlanLimits.vendor, vendorController.createVendor);
-vendorRoutes.put('/:id', vendorController.updateVendor);
-vendorRoutes.delete('/:id', vendorController.deleteVendor);
+vendorRoutes.get(
+    '/',
+    checkPermission(PERMISSION.MANAGE_VENDOR),
+    vendorController.getListVendor
+);
+vendorRoutes.post(
+    '/',
+    checkPermission(PERMISSION.CREATE_VENDOR),
+    vendorController.createVendor
+);
+vendorRoutes.put(
+    '/:id',
+    checkPermission(PERMISSION.EDIT_VENDOR),
+    vendorController.updateVendor
+);
+vendorRoutes.delete(
+    '/:id',
+    checkPermission(PERMISSION.DELETE_VENDOR),
+    vendorController.deleteVendor
+);
 
 module.exports = vendorRoutes;

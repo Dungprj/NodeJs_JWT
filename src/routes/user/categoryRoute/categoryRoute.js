@@ -13,7 +13,7 @@ categoryRoute.get(
 );
 categoryRoute.get(
     '/:id',
-    checkPermission(PERMISSION.EDIT_CATEGORY),
+    checkPermission(PERMISSION.MANAGE_CATEGORY),
     categoryController.getCategoryById
 );
 categoryRoute.post(
@@ -21,7 +21,15 @@ categoryRoute.post(
     checkPermission(PERMISSION.CREATE_CATEGORY),
     categoryController.createCategory
 );
-categoryRoute.put('/:id', categoryController.updateCategory);
-categoryRoute.delete('/:id', categoryController.deleteCategory);
+categoryRoute.put(
+    '/:id',
+    checkPermission(PERMISSION.EDIT_CATEGORY),
+    categoryController.updateCategory
+);
+categoryRoute.delete(
+    '/:id',
+    checkPermission(PERMISSION.DELETE_CATEGORY),
+    categoryController.deleteCategory
+);
 
 module.exports = categoryRoute;

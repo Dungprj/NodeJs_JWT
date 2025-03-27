@@ -53,8 +53,19 @@ app.use(globalErrorHandler);
         console.log(`>>> Connect to ${process.env.DB_USERNAME} successful`);
         await sequelize.sync({ force: false });
         console.log('Đồng bộ model thành công!');
+
+        const os = require('os');
+        const networkInterfaces = os.networkInterfaces();
+        const localIp =
+            Object.values(networkInterfaces)
+                .flat()
+                .find(iface => iface.family === 'IPv4' && !iface.internal)
+                ?.address || '127.0.0.1';
+
         app.listen(port, () => {
-            console.log(`Backend Nodejs App listening on port ${port}`);
+            console.log(`Server running at:`);
+            console.log(`- Local:   http://localhost:${port}`);
+            console.log(`- Network: http://${localIp}:${port}`);
         });
     } catch (error) {
         console.log('>>> Error connect to DB: ', error);

@@ -39,6 +39,16 @@ const userProfileController = {
             'Cập nhật hồ sơ thành công',
             200
         );
+    }),
+    // Cập nhật thông tin hồ sơ người dùng (200 OK | 404 Not Found)
+    deleteProfile: catchAsync(async (req, res) => {
+        // Giả sử userId được lấy từ req.user (thông qua middleware xác thực)
+        const userId = req.user?.id;
+        if (!userId) {
+            throw new AppError('Không tìm thấy thông tin người dùng', 401);
+        }
+        const profileUser = await userProfileService.deleteUser(userId);
+        return ApiResponse.success(res, null, 'xóa hồ sơ thành công', 204);
     })
 };
 

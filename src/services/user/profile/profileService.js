@@ -60,6 +60,16 @@ const profileService = {
         delete result.confirmPassword;
         delete result.deletedAt;
         return result;
+    },
+    // Update current user's profile
+    deleteUser: async id => {
+        // Tìm user theo id
+        const user = await User.findByPk(id);
+        if (!user) {
+            throw new AppError('Không tìm thấy user để cập nhật', 404);
+        }
+        const result = await user.destroy();
+        return result;
     }
 };
 
