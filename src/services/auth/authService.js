@@ -17,33 +17,15 @@ const AppError = require('../../utils/appError');
 const { json } = require('express');
 const commom = require('../../common/common');
 
+const checkPlanLimits = require('../../middleware/checkPlanLimits');
+
 require('dotenv').config();
 
 // Hàm tính thời gian hết hạn (expiresAt) dựa trên giá trị từ .env
 const getExpiresAtFromDuration = duration => {
     const now = new Date();
-    const durationInMs = parseDurationToMilliseconds(duration);
+    const durationInMs = commom.parseDurationToMilliseconds(duration);
     return new Date(now.getTime() + durationInMs);
-};
-
-// Hàm chuyển đổi định dạng thời gian từ chuỗi sang milliseconds
-const parseDurationToMilliseconds = duration => {
-    const units = {
-        s: 1000, // seconds
-        m: 1000 * 60, // minutes
-        h: 1000 * 60 * 60, // hours
-        d: 1000 * 60 * 60 * 24, // days
-        y: 1000 * 60 * 60 * 24 * 365 // years
-    };
-
-    const match = duration.match(/^(\d+)([smhdy])$/);
-    if (!match) {
-        throw new Error(`Invalid duration format: ${duration}`);
-    }
-
-    const value = parseInt(match[1], 10);
-    const unit = match[2];
-    return value * units[unit];
 };
 
 const authService = {
@@ -134,6 +116,15 @@ const authService = {
             //neu user khong ton tai
             if (!isExistUser) {
                 throw new AppError('Email not exists', 404);
+            }
+
+            const isParent = isExistUser.type == 'Owner';
+
+            //đồng bộ redis
+            if (!isParent) {
+                checkPlanLimits.syncSubUserCount(isExistUser.parent_id);
+            } else {
+                checkPlanLimits.syncSubUserCount(isExistUser.id);
             }
 
             // const isMatch = await bcrypt.compare(

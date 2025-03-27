@@ -3,7 +3,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const sequelize = require('./config/database');
 const cors = require('cors');
-
+const redisClient = require('./config/redis'); // Import để khởi tạo kết nối
 const middleware = require('./middleware/auth');
 const authRoutes = require('./routes/common/auth');
 const userRoutes = require('./routes/user/userRoute');

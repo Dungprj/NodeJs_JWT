@@ -9,7 +9,10 @@ const userController = {
         const users = await userService.getListUser(idQuery);
         return ApiResponse.success(
             res,
-            users,
+            {
+                lenght: users.length,
+                users
+            },
             'Lấy danh sách user thành công CỐC',
             200
         );

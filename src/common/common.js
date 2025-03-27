@@ -42,6 +42,25 @@ const commom = {
         // // Xóa các dấu gạch nối dư thừa
         str = str.replace(/\-\-+/g, '-').trim();
         return str;
+    },
+    // Hàm chuyển đổi định dạng thời gian từ chuỗi sang milliseconds
+    parseDurationToMilliseconds: duration => {
+        const units = {
+            s: 1000, // seconds
+            m: 1000 * 60, // minutes
+            h: 1000 * 60 * 60, // hours
+            d: 1000 * 60 * 60 * 24, // days
+            y: 1000 * 60 * 60 * 24 * 365 // years
+        };
+
+        const match = duration.match(/^(\d+)([smhdy])$/);
+        if (!match) {
+            throw new Error(`Invalid duration format: ${duration}`);
+        }
+
+        const value = parseInt(match[1], 10);
+        const unit = match[2];
+        return value * units[unit];
     }
 };
 
