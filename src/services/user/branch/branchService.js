@@ -117,6 +117,8 @@ const branchService = {
         if (data.branch_manager !== undefined)
             branch.branch_manager = data.branch_manager;
 
+        if (data.name !== undefined) branch.name = data.name;
+
         await branch.save();
         return branch;
     },
