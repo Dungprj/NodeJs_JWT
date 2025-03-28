@@ -59,6 +59,11 @@ InvoicePurchaseDetail.belongsTo(InvoicePurchase, {
     as: 'invoice'
 });
 
+InvoicePurchaseDetail.belongsTo(Tax, {
+    foreignKey: 'tax_id',
+    as: 'InvoicePurchaseDetailtax'
+});
+
 InvoicePurchaseDetail.belongsTo(Product, {
     foreignKey: 'product_id',
     as: 'product'

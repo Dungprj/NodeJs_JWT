@@ -9,6 +9,7 @@ const CashRegister = require('../../../db/models/cashregister');
 const Branch = require('../../../db/models/branch');
 
 const AppError = require('../../../utils/appError');
+const Tax = require('../../../db/models/tax');
 
 const invoicePurchaseService = {
     // Lấy tất cả hóa đơn nhập hàng của user (200 OK | 404 Not Found)
@@ -94,12 +95,20 @@ const invoicePurchaseService = {
             const productIds = data.products.map(p => p.id);
 
             const products = await Product.findAll({
+                include: {
+                    model: Tax,
+                    as: 'tax'
+                },
                 where: { id: { [Op.in]: productIds } },
                 transaction
             });
 
+            console.log('du lieu : ', products);
+
             for (const product of data.products) {
-                const productInfo = products.find(p => p.id === product.id);
+                const productInfo = products.find(
+                    p => p.dataValues.id === product.id
+                );
                 if (!productInfo) {
                     throw new AppError(
                         `Sản phẩm với ID ${product.id} không tồn tại`,
@@ -123,7 +132,7 @@ const invoicePurchaseService = {
                         price: productInfo.purchase_price || 0,
                         quantity: parseFloat(product.quantity),
                         tax_id: productInfo.tax_id || 0,
-                        tax: productInfo.tax || 0
+                        tax: productInfo.tax.percentage || 0
                     });
                 }
             }
@@ -212,6 +221,7 @@ const invoicePurchaseService = {
             if (data.vendor_id !== undefined)
                 invoicePurchase.vendor_id = data.vendor_id;
             if (data.status !== undefined) invoicePurchase.status = data.status;
+            if (data.tax !== undefined) invoicePurchase.tax = data.tax;
 
             if (
                 data.products &&

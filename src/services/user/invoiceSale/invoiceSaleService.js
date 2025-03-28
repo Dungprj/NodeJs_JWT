@@ -89,12 +89,18 @@ const invoiceSaleService = {
 
             // Khóa sản phẩm ngay từ đầu
             const products = await Product.findAll({
+                include: {
+                    model: Tax,
+                    as: 'tax'
+                },
                 where: { id: { [Op.in]: productIds } },
                 transaction
             });
 
             for (const product of data.products) {
-                const productInfo = products.find(p => p.id === product.id);
+                const productInfo = products.find(
+                    p => p.dataValues.id === product.id
+                );
                 if (!productInfo) {
                     throw new AppError(
                         `Sản phẩm với ID ${product.id} không tồn tại`,
@@ -213,6 +219,7 @@ const invoiceSaleService = {
                 invoiceSale.cash_register_id = data.cashRegisterId;
             if (data.customerId) invoiceSale.customer_id = data.customerId;
             if (data.status) invoiceSale.status = data.status;
+            if (data.tax !== undefined) invoicePurchase.tax = data.tax;
 
             if (
                 data.products &&
