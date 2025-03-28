@@ -4,6 +4,10 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
 const AppError = require('../../utils/appError');
 const User = require('./user');
+const Customer = require('./customer');
+const Branch = require('./branch');
+const CashRegister = require('./cashregister');
+
 const InvoiceSale = sequelize.define(
     'InvoiceSale',
     {
@@ -67,20 +71,20 @@ const InvoiceSale = sequelize.define(
 );
 
 // // Định nghĩa mối quan hệ
-// InvoicePurchase.belongsTo(Vendor, {
-//     foreignKey: 'vendor_id',
-//     as: 'vendor'
-// });
+InvoiceSale.belongsTo(Customer, {
+    foreignKey: 'customer_id',
+    as: 'Customer'
+});
 
-// InvoicePurchase.belongsTo(Branch, {
-//     foreignKey: 'branch_id',
-//     as: 'branch'
-// });
+InvoiceSale.belongsTo(Branch, {
+    foreignKey: 'branch_id',
+    as: 'branch'
+});
 
-// InvoicePurchase.belongsTo(CashRegister, {
-//     foreignKey: 'cash_register_id',
-//     as: 'cashRegister'
-// });
+InvoiceSale.belongsTo(CashRegister, {
+    foreignKey: 'cash_register_id',
+    as: 'cashRegister'
+});
 
 // InvoicePurchase.belongsTo(User, {
 //     foreignKey: 'created_by',

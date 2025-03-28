@@ -3,6 +3,10 @@ const { Op } = require('sequelize');
 const InvoiceSale = require('../../../db/models/invoicesale');
 const InvoiceSaleDetail = require('../../../db/models/invoicesaledetail');
 const Product = require('../../../db/models/product');
+const Customer = require('../../../db/models/customer');
+const Branch = require('../../../db/models/branch');
+const CashRegister = require('../../../db/models/cashregister');
+
 const AppError = require('../../../utils/appError');
 
 const invoiceSaleService = {
@@ -10,7 +14,21 @@ const invoiceSaleService = {
     getAllInvoiceSales: async id => {
         const invoiceSales = await InvoiceSale.findAll({
             where: { created_by: id },
-            include: [{ model: InvoiceSaleDetail, as: 'details' }]
+            include: [
+                { model: InvoiceSaleDetail, as: 'details' },
+                {
+                    model: Customer,
+                    as: 'Customer'
+                },
+                {
+                    model: Branch,
+                    as: 'branch'
+                },
+                {
+                    model: CashRegister,
+                    as: 'cashRegister'
+                }
+            ]
         });
 
         if (!invoiceSales || invoiceSales.length === 0) {
@@ -25,7 +43,21 @@ const invoiceSaleService = {
     // Lấy hóa đơn bán hàng theo ID (200 OK | 404 Not Found)
     getInvoiceSaleById: async (idQuery, id) => {
         const invoiceSale = await InvoiceSale.findAll({
-            include: [{ model: InvoiceSaleDetail, as: 'details' }],
+            include: [
+                { model: InvoiceSaleDetail, as: 'details' },
+                {
+                    model: Customer,
+                    as: 'Customer'
+                },
+                {
+                    model: Branch,
+                    as: 'branch'
+                },
+                {
+                    model: CashRegister,
+                    as: 'cashRegister'
+                }
+            ],
             where: { created_by: idQuery, id: id }
         });
         if (!invoiceSale) {

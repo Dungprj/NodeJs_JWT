@@ -1,7 +1,7 @@
 require('dotenv').config();
 const Customer = require('../../../db/models/customer');
 const AppError = require('../../../utils/appError');
-
+const { Op } = require('sequelize');
 const customerService = {
     // Lấy tất cả khách hàng của user (200 OK | 404 Not Found)
     getAllCustomers: async id => {

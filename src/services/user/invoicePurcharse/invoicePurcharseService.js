@@ -3,6 +3,11 @@ const { Op } = require('sequelize');
 const InvoicePurchase = require('../../../db/models/invoicePurchase');
 const InvoicePurchaseDetail = require('../../../db/models/invoicePurchaseDetail');
 const Product = require('../../../db/models/product');
+
+const Vendor = require('../../../db/models/vendor');
+const CashRegister = require('../../../db/models/cashregister');
+const Branch = require('../../../db/models/branch');
+
 const AppError = require('../../../utils/appError');
 
 const invoicePurchaseService = {
@@ -10,7 +15,24 @@ const invoicePurchaseService = {
     getAllInvoicePurchases: async id => {
         const invoicePurchases = await InvoicePurchase.findAll({
             where: { created_by: id },
-            include: [{ model: InvoicePurchaseDetail, as: 'details' }]
+            include: [
+                {
+                    model: InvoicePurchaseDetail,
+                    as: 'details'
+                },
+                {
+                    model: Vendor,
+                    as: 'vendor'
+                },
+                {
+                    model: CashRegister,
+                    as: 'cashRegister'
+                },
+                {
+                    model: Branch,
+                    as: 'branch'
+                }
+            ]
         });
 
         if (!invoicePurchases || invoicePurchases.length === 0) {
@@ -25,7 +47,24 @@ const invoicePurchaseService = {
     // Lấy hóa đơn nhập hàng theo ID (200 OK | 404 Not Found)
     getInvoicePurchaseById: async (idQuery, id) => {
         const invoicePurchase = await InvoicePurchase.findAll({
-            include: [{ model: InvoicePurchaseDetail, as: 'details' }],
+            include: [
+                {
+                    model: InvoicePurchaseDetail,
+                    as: 'details'
+                },
+                {
+                    model: Vendor,
+                    as: 'vendor'
+                },
+                {
+                    model: CashRegister,
+                    as: 'cashRegister'
+                },
+                {
+                    model: Branch,
+                    as: 'branch'
+                }
+            ],
             where: { created_by: idQuery, id: id }
         });
         if (!invoicePurchase) {

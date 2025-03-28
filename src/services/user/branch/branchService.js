@@ -2,7 +2,7 @@ require('dotenv').config();
 const Branch = require('../../../db/models/branch');
 const CastRegister = require('../../../db/models/cashregister');
 const User = require('../../../db/models/user');
-
+const { Op } = require('sequelize');
 const AppError = require('../../../utils/appError');
 const commom = require('../../../common/common');
 const branchService = {
@@ -101,7 +101,7 @@ const branchService = {
         }
 
         const existingBranch = await Branch.findOne({
-            where: { name: data.name }
+            where: { name: data.name, id: { [Op.ne]: id } }
         });
 
         if (existingBranch) {
