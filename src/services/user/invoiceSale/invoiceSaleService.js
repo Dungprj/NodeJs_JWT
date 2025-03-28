@@ -141,7 +141,7 @@ const invoiceSaleService = {
                     customer_id: data.customerId || 0,
                     branch_id: data.branchId,
                     cash_register_id: data.cashRegisterId,
-                    status: data.status || 2,
+                    status: data.status ?? 2,
                     created_by: idQuery
                 },
                 { transaction }

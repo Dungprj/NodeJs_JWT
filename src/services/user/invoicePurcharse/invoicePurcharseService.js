@@ -144,7 +144,7 @@ const invoicePurchaseService = {
                     vendor_id: data.vendor_id || 0,
                     branch_id: data.branchId,
                     cash_register_id: data.cashRegisterId || 0,
-                    status: data.status || 2,
+                    status: data.status ?? 2,
                     created_by: idQuery
                 },
                 { transaction }
