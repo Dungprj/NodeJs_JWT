@@ -2,6 +2,7 @@ require('dotenv').config();
 const Customer = require('../../../db/models/customer');
 const AppError = require('../../../utils/appError');
 const { Op } = require('sequelize');
+const redisClient = require('../../../config/redis'); // Import từ file cấu hình
 const customerService = {
     // Lấy tất cả khách hàng của user (200 OK | 404 Not Found)
     getAllCustomers: async id => {
@@ -103,6 +104,14 @@ const customerService = {
 
     // Xóa khách hàng (204 No Content | 404 Not Found)
     deleteCustomer: async (id, idQuery) => {
+        const redisKey = `customer_count:${idQuery}`;
+        const newCount = await redisClient.decr(redisKey);
+        if (newCount < 0) {
+            await redisClient.incr(redisKey);
+            return next(
+                new AppError('Lỗi trong việc giảm số lượng trên redis', 400)
+            );
+        }
         const customer = await Customer.findOne({
             where: {
                 id: id,

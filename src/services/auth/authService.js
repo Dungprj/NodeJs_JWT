@@ -123,8 +123,12 @@ const authService = {
             //đồng bộ redis
             if (!isParent) {
                 checkPlanLimits.syncSubUserCount(isExistUser.parent_id);
+                checkPlanLimits.syncCustomerCount(isExistUser.parent_id);
+                checkPlanLimits.syncVendorCount(isExistUser.parent_id);
             } else {
                 checkPlanLimits.syncSubUserCount(isExistUser.id);
+                checkPlanLimits.syncCustomerCount(isExistUser.id);
+                checkPlanLimits.syncVendorCount(isExistUser.id);
             }
 
             // const isMatch = await bcrypt.compare(

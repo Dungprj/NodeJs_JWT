@@ -14,6 +14,7 @@ vendorRoutes.get(
 vendorRoutes.post(
     '/',
     checkPermission(PERMISSION.CREATE_VENDOR),
+    checkPlanLimits.vendor,
     vendorController.createVendor
 );
 vendorRoutes.put(

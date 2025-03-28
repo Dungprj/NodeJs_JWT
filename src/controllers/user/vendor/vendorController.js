@@ -58,7 +58,8 @@ const vendorController = {
 
     // Xóa nhà cung cấp (204 No Content | 404 Not Found)
     deleteVendor: catchAsync(async (req, res) => {
-        await vendorService.deleteVendor(req.params.id);
+        const idQuery = req.idQuery;
+        await vendorService.deleteVendor(req.params.id, idQuery);
         return ApiResponse.success(
             res,
             null,

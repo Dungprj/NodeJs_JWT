@@ -19,8 +19,8 @@ customerRoute.get(
 );
 customerRoute.post(
     '/',
-    checkPlanLimits.customer,
     checkPermission(PERMISSION.CREATE_CUSTOMER),
+    checkPlanLimits.customer,
     customerController.createCustomer
 );
 customerRoute.put(

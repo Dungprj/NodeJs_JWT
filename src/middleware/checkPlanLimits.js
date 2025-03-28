@@ -26,19 +26,21 @@ const getPlanCurrent = async id => {
 // Middleware kiểm tra giới hạn
 const checkPlanLimits = {
     customer: catchAsync(async (req, res, next) => {
-        const idQuery = req.idQuery;
-        const transaction = await Customer.sequelize.transaction();
-        const plan = await getPlanCurrent(idQuery);
         try {
-            if (plan.max_customers != -1) {
-                const customerCount = await Customer.count({
-                    where: { created_by: idQuery },
-                    transaction,
-                    lock: transaction.LOCK.UPDATE
-                });
+            const idQuery = req.idQuery;
 
-                if (customerCount >= plan.max_customers) {
-                    await transaction.rollback();
+            const plan = await getPlanCurrent(idQuery);
+
+            if (plan.max_customers != -1) {
+                const redisKey = `customer_count:${idQuery}`;
+
+                // Lấy số lượng hiện tại từ Redis
+                const currentCount = parseInt(
+                    (await redisClient.get(redisKey)) || 0
+                );
+
+                // Nếu đã đạt giới hạn trước khi tăng
+                if (currentCount >= plan.max_customers) {
                     return next(
                         new AppError(
                             'Bạn đã đạt giới hạn về số khách hàng',
@@ -47,13 +49,45 @@ const checkPlanLimits = {
                     );
                 }
 
-                req.transaction = transaction;
+                // Tăng đếm trong Redis (atomic operation)
+                const newCount = await redisClient.incr(redisKey);
+
+                console.log(
+                    'Số lượng khách hàng mới là ----------------',
+                    newCount
+                );
+                if (newCount > plan.max_customers) {
+                    // Nếu vượt giới hạn do race condition, giảm lại và từ chối
+                    await redisClient.decr(redisKey);
+
+                    return next(
+                        new AppError(
+                            'Bạn đã đạt giới hạn về số khách hàng',
+                            409
+                        )
+                    );
+                }
+
+                // Đặt TTL cho key (ví dụ: 30 ngày)
+                await redisClient.expire(
+                    redisKey,
+                    commom.parseDurationToMilliseconds(
+                        process.env.JWT_REFRESH_EXPIRE
+                    )
+                );
+
+                next();
+            } else {
                 next();
             }
-            req.transaction = transaction;
-            next();
         } catch (err) {
-            await transaction.rollback();
+            // Nếu lỗi, giảm đếm trong Redis để giữ đồng bộ
+            const redisKey = `customer_count:${req.idQuery}`;
+            const currentCount = await redisClient.get(redisKey);
+            if (currentCount > 0) {
+                await redisClient.decr(redisKey);
+            }
+
             return next(new AppError(err.message, 500));
         }
     }),
@@ -61,7 +95,7 @@ const checkPlanLimits = {
     user: catchAsync(async (req, res, next) => {
         try {
             const idQuery = req.idQuery;
-            const transaction = await User.sequelize.transaction();
+
             const plan = await getPlanCurrent(idQuery);
 
             if (plan.max_users != -1) {
@@ -74,7 +108,6 @@ const checkPlanLimits = {
 
                 // Nếu đã đạt giới hạn trước khi tăng
                 if (currentCount >= plan.max_users) {
-                    await transaction.rollback();
                     return next(
                         new AppError(
                             'Bạn đã đạt giới hạn về số người dùng',
@@ -90,7 +123,7 @@ const checkPlanLimits = {
                 if (newCount > plan.max_users) {
                     // Nếu vượt giới hạn do race condition, giảm lại và từ chối
                     await redisClient.decr(redisKey);
-                    await transaction.rollback();
+
                     return next(
                         new AppError(
                             'Bạn đã đạt giới hạn về số người dùng',
@@ -107,12 +140,8 @@ const checkPlanLimits = {
                     )
                 );
 
-                // Lưu transaction để dùng ở bước sau (tạo user trong MySQL)
-                req.transaction = transaction;
-
                 next();
             } else {
-                req.transaction = transaction;
                 next();
             }
         } catch (err) {
@@ -122,7 +151,7 @@ const checkPlanLimits = {
             if (currentCount > 0) {
                 await redisClient.decr(redisKey);
             }
-            await transaction.rollback();
+
             return next(new AppError(err.message, 500));
         }
     }),
@@ -130,37 +159,112 @@ const checkPlanLimits = {
     vendor: catchAsync(async (req, res, next) => {
         try {
             const idQuery = req.idQuery;
-            const transaction = await Vendor.sequelize.transaction();
-            const plan = await getPlanCurrent(idQuery);
-            if (plan.max_vendors != -1) {
-                const vendorCount = await Vendor.count({
-                    where: { created_by: idQuery },
-                    transaction,
-                    lock: transaction.LOCK.UPDATE
-                });
 
-                if (vendorCount >= plan.max_vendors) {
-                    await transaction.rollback();
+            const plan = await getPlanCurrent(idQuery);
+
+            if (plan.max_vendors != -1) {
+                const redisKey = `vendor_count:${idQuery}`;
+
+                // Lấy số lượng hiện tại từ Redis
+                const currentCount = parseInt(
+                    (await redisClient.get(redisKey)) || 0
+                );
+
+                console.log('du lieu lay dc tu redis la ', currentCount);
+
+                // Nếu đã đạt giới hạn trước khi tăng
+                if (currentCount >= plan.max_vendors) {
                     return next(
                         new AppError(
-                            'Bạn đã đạt giới hạn về số nhà cung cấp',
+                            'Bạn đã đạt giới hạn về số nhà cung cấp ' +
+                                currentCount,
                             409
                         )
                     );
                 }
 
-                await transaction.commit();
+                // Tăng đếm trong Redis (atomic operation)
+                const newCount = await redisClient.incr(redisKey);
+
+                console.log(
+                    'Số lượng nhà cung cấp mới là ----------------',
+                    newCount
+                );
+                if (newCount > plan.max_vendors) {
+                    // Nếu vượt giới hạn do race condition, giảm lại và từ chối
+                    const soLuongSauKhiGiam = await redisClient.decr(redisKey);
+
+                    console.log(
+                        'Số lượng nhà cung cấp sau khi bị lỗi  111',
+                        soLuongSauKhiGiam
+                    );
+
+                    return next(
+                        new AppError(
+                            'Bạn đã đạt giới hạn về số nhà cung cấp 222',
+
+                            409
+                        )
+                    );
+                }
+
+                // Đặt TTL cho key (ví dụ: 30 ngày)
+                await redisClient.expire(
+                    redisKey,
+                    commom.parseDurationToMilliseconds(
+                        process.env.JWT_REFRESH_EXPIRE
+                    )
+                );
+
+                next();
+            } else {
                 next();
             }
-            req.transaction = transaction;
-            next();
         } catch (err) {
-            await transaction.rollback();
+            // Nếu lỗi, giảm đếm trong Redis để giữ đồng bộ
+            const redisKey = `vendor_count:${req.idQuery}`;
+            const currentCount = await redisClient.get(redisKey);
+            if (currentCount > 0) {
+                await redisClient.decr(redisKey);
+            }
+
             return next(new AppError(err.message, 500));
         }
-    }), // Đồng bộ số lượng ban đầu từ MySQL vào Redis (gọi khi khởi động server nếu cần)
+    }),
 
     //đồng bộ số lượng user con từ MySQL vào Redis
+    syncVendorCount: async parentId => {
+        const redisKey = `vendor_count:${parentId}`;
+        const count = await Vendor.count({ where: { created_by: parentId } });
+        await redisClient.set(redisKey, count);
+
+        const userGEt = await redisClient.get(redisKey);
+
+        console.log(
+            'Số lượng nhà cung cấp sau khi dong bo là ----------------',
+            userGEt
+        );
+        await redisClient.expire(
+            redisKey,
+            commom.parseDurationToMilliseconds(process.env.JWT_REFRESH_EXPIRE)
+        ); // TTL 1 ngày
+    },
+    syncCustomerCount: async parentId => {
+        const redisKey = `customer_count:${parentId}`;
+        const count = await Customer.count({ where: { created_by: parentId } });
+        await redisClient.set(redisKey, count);
+
+        const userGEt = await redisClient.get(redisKey);
+
+        console.log(
+            'Số lượng customer sau khi dong bo là ----------------',
+            userGEt
+        );
+        await redisClient.expire(
+            redisKey,
+            commom.parseDurationToMilliseconds(process.env.JWT_REFRESH_EXPIRE)
+        ); // TTL 1 ngày
+    },
     syncSubUserCount: async parentId => {
         const redisKey = `sub_user_count:${parentId}`;
         const count = await User.count({ where: { parent_id: parentId } });

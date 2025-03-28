@@ -1,5 +1,5 @@
 require('dotenv').config();
-
+const redisClient = require('../../../config/redis'); // Import từ file cấu hình
 const Vendor = require('../../../db/models/vendor');
 const AppError = require('../../../utils/appError');
 
@@ -105,7 +105,17 @@ const vendorService = {
     },
 
     // Xóa nhà cung cấp (204 No Content | 404 Not Found)
-    deleteVendor: async id => {
+    deleteVendor: async (id, idQuery) => {
+        const redisKey = `vendor_count:${idQuery}`;
+        const newCount = await redisClient.decr(redisKey);
+
+        if (newCount < 0) {
+            await redisClient.incr(redisKey);
+            return next(
+                new AppError('Lỗi trong việc giảm số lượng trên redis', 400)
+            );
+        }
+
         const vendor = await Vendor.findByPk(id);
         if (!vendor) {
             throw new AppError('Không tìm thấy nhà cung cấp để xóa', 404);

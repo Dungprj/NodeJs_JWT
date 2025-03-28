@@ -4,7 +4,7 @@ const User = require('../../../db/models/user');
 const Role = require('../../../db/models/roles');
 const Branch = require('../../../db/models/branch');
 const CastRegister = require('../../../db/models/cashregister');
-
+const redisClient = require('../../../config/redis'); // Import từ file cấu hình
 const AppError = require('../../../utils/appError');
 
 const userService = {
@@ -56,15 +56,10 @@ const userService = {
         //get danh sach chi nhanh user dang dang nhap
         const branchList = await Branch.findAll({
             attributes: ['id', 'name'],
-            where: {
-                created_by: idQuery
-            }
-        });
-
-        //get danh sach may tinh tien user dang dang nhap
-
-        const cashRegisterList = await CastRegister.findAll({
-            attributes: ['id', 'name'],
+            include: {
+                model: CastRegister,
+                as: 'branchCashRegister'
+            },
             where: {
                 created_by: idQuery
             }
@@ -72,8 +67,7 @@ const userService = {
 
         return {
             roleList,
-            branchList,
-            cashRegisterList
+            branchList
         };
     },
     handleActiveUser: async (id, data) => {

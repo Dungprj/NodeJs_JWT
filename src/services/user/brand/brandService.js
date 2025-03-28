@@ -57,6 +57,14 @@ const brandService = {
             throw new AppError('Không tìm thấy thương hiệu để cập nhật', 404);
         }
 
+        const existingBrand = await Brand.findOne({
+            where: { name: data.name, id: { [Op.ne]: id } }
+        });
+
+        if (existingBrand) {
+            throw new AppError('thương hiệu đã tồn tại', 409);
+        }
+
         if (data.name) brand.name = data.name;
 
         await brand.save();
