@@ -26,10 +26,10 @@ const getPlanCurrent = async id => {
 // Middleware kiểm tra giới hạn
 const checkPlanLimits = {
     customer: catchAsync(async (req, res, next) => {
+        const idQuery = req.idQuery;
+        const transaction = await Customer.sequelize.transaction();
+        const plan = await getPlanCurrent(idQuery);
         try {
-            const idQuery = req.idQuery;
-            const transaction = await Customer.sequelize.transaction();
-            const plan = await getPlanCurrent(idQuery);
             if (plan.max_customers != -1) {
                 const customerCount = await Customer.count({
                     where: { created_by: idQuery },
@@ -42,7 +42,7 @@ const checkPlanLimits = {
                     return next(
                         new AppError(
                             'Bạn đã đạt giới hạn về số khách hàng',
-                            400
+                            409
                         )
                     );
                 }
@@ -78,7 +78,7 @@ const checkPlanLimits = {
                     return next(
                         new AppError(
                             'Bạn đã đạt giới hạn về số người dùng',
-                            400
+                            409
                         )
                     );
                 }
@@ -94,7 +94,7 @@ const checkPlanLimits = {
                     return next(
                         new AppError(
                             'Bạn đã đạt giới hạn về số người dùng',
-                            400
+                            409
                         )
                     );
                 }
@@ -144,7 +144,7 @@ const checkPlanLimits = {
                     return next(
                         new AppError(
                             'Bạn đã đạt giới hạn về số nhà cung cấp',
-                            400
+                            409
                         )
                     );
                 }
