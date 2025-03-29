@@ -19,7 +19,8 @@ const unitController = {
 
     // Lấy chi tiết đơn vị theo ID (200 OK | 404 Not Found)
     getUnitById: catchAsync(async (req, res) => {
-        const unit = await unitService.getUnitById(req.params.id);
+        const idQuery = req.idQuery;
+        const unit = await unitService.getUnitById(req.params.id, idQuery);
         return ApiResponse.success(
             res,
             unit,
@@ -44,8 +45,10 @@ const unitController = {
 
     // Cập nhật đơn vị (200 OK | 404 Not Found)
     updateUnit: catchAsync(async (req, res) => {
+        const idQuery = req.idQuery;
         const updatedUnit = await unitService.updateUnit(
             req.params.id,
+            idQuery,
             req.body
         );
         return ApiResponse.success(
@@ -58,7 +61,8 @@ const unitController = {
 
     // Xóa đơn vị (204 No Content | 404 Not Found)
     deleteUnit: catchAsync(async (req, res) => {
-        await unitService.deleteUnit(req.params.id);
+        const idQuery = req.idQuery;
+        await unitService.deleteUnit(req.params.id, idQuery);
         return ApiResponse.success(
             res,
             null,

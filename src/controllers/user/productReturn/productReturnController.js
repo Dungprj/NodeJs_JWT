@@ -19,8 +19,10 @@ const productReturnController = {
 
     // Lấy phiếu trả hàng theo ID (GET /api/product-returns/:id)
     getProductReturnById: catchAsync(async (req, res) => {
+        const idQuery = req.idQuery;
         const productReturn = await productReturnService.getProductReturnById(
-            req.params.id
+            req.params.id,
+            idQuery
         );
         return ApiResponse.success(
             res,

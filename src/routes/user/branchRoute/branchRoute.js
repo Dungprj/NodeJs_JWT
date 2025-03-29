@@ -15,6 +15,11 @@ branchRoutes.get(
     checkPermission(PERMISSION.MANAGE_BRANCH),
     branchController.getListBranches
 );
+branchRoutes.get(
+    '/:id',
+    checkPermission(PERMISSION.MANAGE_BRANCH),
+    branchController.getBranchById
+);
 branchRoutes.post(
     '/',
     checkPermission(PERMISSION.CREATE_BRANCH),

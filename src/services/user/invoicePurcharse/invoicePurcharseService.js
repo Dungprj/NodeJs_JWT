@@ -13,9 +13,9 @@ const Tax = require('../../../db/models/tax');
 
 const invoicePurchaseService = {
     // Lấy tất cả hóa đơn nhập hàng của user (200 OK | 404 Not Found)
-    getAllInvoicePurchases: async id => {
+    getAllInvoicePurchases: async idQuery => {
         const invoicePurchases = await InvoicePurchase.findAll({
-            where: { created_by: id },
+            where: { created_by: idQuery },
             include: [
                 {
                     model: InvoicePurchaseDetail,
@@ -51,19 +51,27 @@ const invoicePurchaseService = {
             include: [
                 {
                     model: InvoicePurchaseDetail,
-                    as: 'details'
+                    as: 'details',
+                    include: {
+                        model: Product,
+                        as: 'product',
+                        attributes: ['id', 'name']
+                    }
                 },
                 {
                     model: Vendor,
-                    as: 'vendor'
+                    as: 'vendor',
+                    attributes: ['id', 'name']
                 },
                 {
                     model: CashRegister,
-                    as: 'cashRegister'
+                    as: 'cashRegister',
+                    attributes: ['id', 'name']
                 },
                 {
                     model: Branch,
-                    as: 'branch'
+                    as: 'branch',
+                    attributes: ['id', 'name']
                 }
             ],
             where: { created_by: idQuery, id: id }
@@ -132,7 +140,7 @@ const invoicePurchaseService = {
                         price: productInfo.purchase_price || 0,
                         quantity: parseFloat(product.quantity),
                         tax_id: productInfo.tax_id || 0,
-                        tax: productInfo.tax.percentage || 0
+                        tax: productInfo.tax?.percentage || 0
                     });
                 }
             }
@@ -196,8 +204,15 @@ const invoicePurchaseService = {
             await transaction.commit();
             return newInvoicePurchase;
         } catch (error) {
+            // Rollback transaction nếu có lỗi
             await transaction.rollback();
-            throw error;
+
+            // Đảm bảo lỗi gốc được ném lại với mã trạng thái đúng
+            if (error instanceof AppError) {
+                throw error; // Giữ nguyên lỗi với mã trạng thái ban đầu (400, 409, v.v.)
+            }
+            // Nếu là lỗi không mong muốn, ném lỗi 500
+            throw new AppError(error, 500);
         }
     },
 
@@ -340,8 +355,15 @@ const invoicePurchaseService = {
             await transaction.commit();
             return invoicePurchase;
         } catch (error) {
+            // Rollback transaction nếu có lỗi
             await transaction.rollback();
-            throw error;
+
+            // Đảm bảo lỗi gốc được ném lại với mã trạng thái đúng
+            if (error instanceof AppError) {
+                throw error; // Giữ nguyên lỗi với mã trạng thái ban đầu (400, 409, v.v.)
+            }
+            // Nếu là lỗi không mong muốn, ném lỗi 500
+            throw new AppError(error, 500);
         }
     },
 
@@ -395,8 +417,15 @@ const invoicePurchaseService = {
             await transaction.commit();
             return true;
         } catch (error) {
+            // Rollback transaction nếu có lỗi
             await transaction.rollback();
-            throw error;
+
+            // Đảm bảo lỗi gốc được ném lại với mã trạng thái đúng
+            if (error instanceof AppError) {
+                throw error; // Giữ nguyên lỗi với mã trạng thái ban đầu (400, 409, v.v.)
+            }
+            // Nếu là lỗi không mong muốn, ném lỗi 500
+            throw new AppError(error, 500);
         }
     }
 };

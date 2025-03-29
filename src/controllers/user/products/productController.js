@@ -28,7 +28,11 @@ const productController = {
 
     // Lấy chi tiết sản phẩm theo ID (200 OK | 404 Not Found)
     getProductById: catchAsync(async (req, res, next) => {
-        const product = await productService.getProductById(req.params.id);
+        const idQuery = req.idQuery;
+        const product = await productService.getProductById(
+            req.params.id,
+            idQuery
+        );
 
         if (!product) {
             return next(new AppError('Sản phẩm không tồn tại', 404));
@@ -68,10 +72,14 @@ const productController = {
             };
 
             // Gọi service để tạo sản phẩm mới
-            const newProduct = await productService.createProductPost(
+            const result = await productService.createProductPost(
                 newProductData,
                 idQuery
             );
+
+            if (result.status == 'fail' || result.status == 'error') {
+                return ApiResponse.error(res, result);
+            }
 
             return ApiResponse.success(
                 res,
@@ -84,6 +92,7 @@ const productController = {
 
     // Cập nhật sản phẩm (200 OK | 404 Not Found)
     updateProduct: catchAsync(async (req, res, next) => {
+        const idQuery = req.idQuery;
         // Xử lý tải ảnh sản phẩm lên
         upload.single('image')(req, res, async err => {
             if (err) {
@@ -101,13 +110,14 @@ const productController = {
             };
 
             // Gọi service để cập nhật sản phẩm
-            const updatedProduct = await productService.updateProduct(
+            const result = await productService.updateProduct(
                 req.params.id,
+                idQuery,
                 updatedProductData
             );
 
-            if (!updatedProduct) {
-                return next(new AppError('Không thể cập nhật sản phẩm', 400));
+            if (result.status == 'fail' || result.status == 'error') {
+                return ApiResponse.error(res, result);
             }
 
             return ApiResponse.success(

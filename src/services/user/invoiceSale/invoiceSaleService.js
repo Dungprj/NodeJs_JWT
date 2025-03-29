@@ -11,22 +11,25 @@ const AppError = require('../../../utils/appError');
 
 const invoiceSaleService = {
     // Lấy tất cả hóa đơn bán hàng của user (200 OK | 404 Not Found)
-    getAllInvoiceSales: async id => {
+    getAllInvoiceSales: async idQuery => {
         const invoiceSales = await InvoiceSale.findAll({
-            where: { created_by: id },
+            where: { created_by: idQuery },
             include: [
                 { model: InvoiceSaleDetail, as: 'details' },
                 {
                     model: Customer,
-                    as: 'Customer'
+                    as: 'Customer',
+                    attributes: ['id', 'name']
                 },
                 {
                     model: Branch,
-                    as: 'branch'
+                    as: 'branch',
+                    attributes: ['id', 'name']
                 },
                 {
                     model: CashRegister,
-                    as: 'cashRegister'
+                    as: 'cashRegister',
+                    attributes: ['id', 'name']
                 }
             ]
         });
@@ -44,18 +47,29 @@ const invoiceSaleService = {
     getInvoiceSaleById: async (idQuery, id) => {
         const invoiceSale = await InvoiceSale.findAll({
             include: [
-                { model: InvoiceSaleDetail, as: 'details' },
+                {
+                    model: InvoiceSaleDetail,
+                    as: 'details',
+                    include: {
+                        model: Product,
+                        as: 'product',
+                        attributes: ['id', 'name']
+                    }
+                },
                 {
                     model: Customer,
-                    as: 'Customer'
+                    as: 'Customer',
+                    attributes: ['id', 'name']
                 },
                 {
                     model: Branch,
-                    as: 'branch'
+                    as: 'branch',
+                    attributes: ['id', 'name']
                 },
                 {
                     model: CashRegister,
-                    as: 'cashRegister'
+                    as: 'cashRegister',
+                    attributes: ['id', 'name']
                 }
             ],
             where: { created_by: idQuery, id: id }
@@ -124,7 +138,7 @@ const invoiceSaleService = {
                         price: productInfo.sale_price || 0,
                         quantity: parseFloat(product.quantity),
                         tax_id: productInfo.tax_id || 0,
-                        tax: productInfo.tax || 0
+                        tax: productInfo.tax?.percentage || 0
                     });
                 }
             }
@@ -195,8 +209,15 @@ const invoiceSaleService = {
             await transaction.commit();
             return newInvoiceSale;
         } catch (error) {
+            // Rollback transaction nếu có lỗi
             await transaction.rollback();
-            throw error;
+
+            // Đảm bảo lỗi gốc được ném lại với mã trạng thái đúng
+            if (error instanceof AppError) {
+                throw error; // Giữ nguyên lỗi với mã trạng thái ban đầu (400, 409, v.v.)
+            }
+            // Nếu là lỗi không mong muốn, ném lỗi 500
+            throw new AppError(error, 500);
         }
     },
 
@@ -352,8 +373,15 @@ const invoiceSaleService = {
 
             return invoiceSale;
         } catch (error) {
+            // Rollback transaction nếu có lỗi
             await transaction.rollback();
-            throw error;
+
+            // Đảm bảo lỗi gốc được ném lại với mã trạng thái đúng
+            if (error instanceof AppError) {
+                throw error; // Giữ nguyên lỗi với mã trạng thái ban đầu (400, 409, v.v.)
+            }
+            // Nếu là lỗi không mong muốn, ném lỗi 500
+            throw new AppError(error, 500);
         }
     },
 
@@ -412,8 +440,15 @@ const invoiceSaleService = {
             await transaction.commit();
             return true;
         } catch (error) {
+            // Rollback transaction nếu có lỗi
             await transaction.rollback();
-            throw error;
+
+            // Đảm bảo lỗi gốc được ném lại với mã trạng thái đúng
+            if (error instanceof AppError) {
+                throw error; // Giữ nguyên lỗi với mã trạng thái ban đầu (400, 409, v.v.)
+            }
+            // Nếu là lỗi không mong muốn, ném lỗi 500
+            throw new AppError(error, 500);
         }
     }
 };

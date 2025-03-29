@@ -9,6 +9,11 @@ brandRoutes.get(
     checkPermission(PERMISSION.MANAGE_BRAND),
     brandController.getListBrand
 );
+brandRoutes.get(
+    '/:id',
+    checkPermission(PERMISSION.MANAGE_BRAND),
+    brandController.getBrandById
+);
 brandRoutes.post(
     '/',
     checkPermission(PERMISSION.CREATE_BRAND),

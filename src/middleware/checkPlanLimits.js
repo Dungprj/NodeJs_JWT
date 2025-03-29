@@ -82,11 +82,14 @@ const checkPlanLimits = {
             }
         } catch (err) {
             // Nếu lỗi, giảm đếm trong Redis để giữ đồng bộ
+
             const redisKey = `customer_count:${req.idQuery}`;
             const currentCount = await redisClient.get(redisKey);
             if (currentCount > 0) {
                 await redisClient.decr(redisKey);
             }
+
+            onsole.log('Loi phai giam --- ', await redisClient.get(redisKey));
 
             return next(new AppError(err.message, 500));
         }

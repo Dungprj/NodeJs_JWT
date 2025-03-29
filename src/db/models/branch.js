@@ -58,7 +58,7 @@ Branch.belongsTo(User, {
 
 CastRegister.belongsTo(Branch, {
     foreignKey: 'branch_id',
-    as: 'cash_register_branch',
+    as: 'branch',
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
 });

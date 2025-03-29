@@ -18,7 +18,8 @@ const taxController = {
 
     // Lấy thông tin thuế theo ID (200 OK | 404 Not Found)
     getTaxById: catchAsync(async (req, res) => {
-        const tax = await taxService.getTaxById(req.params.id);
+        const idQuery = req.idQuery;
+        const tax = await taxService.getTaxById(req.params.id, idQuery);
         return ApiResponse.success(
             res,
             tax,
@@ -42,7 +43,12 @@ const taxController = {
 
     // Cập nhật thuế (200 OK | 404 Not Found)
     updateTax: catchAsync(async (req, res) => {
-        const updatedTax = await taxService.updateTax(req.params.id, req.body);
+        const idQuery = req.idQuery;
+        const updatedTax = await taxService.updateTax(
+            req.params.id,
+            idQuery,
+            req.body
+        );
         return ApiResponse.success(
             res,
             updatedTax,
@@ -53,7 +59,8 @@ const taxController = {
 
     // Xóa thuế (204 No Content | 404 Not Found)
     deleteTax: catchAsync(async (req, res) => {
-        await taxService.deleteTax(req.params.id);
+        const idQuery = req.idQuery;
+        await taxService.deleteTax(req.params.id, idQuery);
         return ApiResponse.success(
             res,
             null,

@@ -15,7 +15,8 @@ const brandController = {
     }),
 
     getBrandById: catchAsync(async (req, res) => {
-        const brand = await brandService.getBrandById(req.params.id);
+        const idQuery = req.idQuery;
+        const brand = await brandService.getBrandById(req.params.id, idQuery);
         return ApiResponse.success(
             res,
             brand,
@@ -31,13 +32,15 @@ const brandController = {
             res,
             newBrand,
             'Thương hiệu đã được tạo thành công',
-            201
+            200
         );
     }),
 
     updateBrand: catchAsync(async (req, res) => {
+        const idQuery = req.idQuery;
         const updatedBrand = await brandService.updateBrand(
             req.params.id,
+            idQuery,
             req.body
         );
         return ApiResponse.success(
@@ -49,7 +52,8 @@ const brandController = {
     }),
 
     deleteBrand: catchAsync(async (req, res) => {
-        await brandService.deleteBrand(req.params.id);
+        const idQuery = req.idQuery;
+        await brandService.deleteBrand(req.params.id, idQuery);
         return ApiResponse.success(
             res,
             null,

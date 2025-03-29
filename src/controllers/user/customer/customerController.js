@@ -15,7 +15,11 @@ const customerController = {
     }),
 
     getCustomerById: catchAsync(async (req, res) => {
-        const customer = await customerService.getCustomerById(req.params.id);
+        const idQuery = req.idQuery;
+        const customer = await customerService.getCustomerById(
+            req.params.id,
+            idQuery
+        );
         return ApiResponse.success(
             res,
             customer,

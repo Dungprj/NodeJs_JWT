@@ -25,7 +25,11 @@ const branchController = {
     }),
 
     getBranchById: catchAsync(async (req, res) => {
-        const branch = await branchService.getBranchById(req.params.id);
+        const idQuery = req.idQuery;
+        const branch = await branchService.getBranchById(
+            req.params.id,
+            idQuery
+        );
         return ApiResponse.success(
             res,
             branch,
@@ -46,8 +50,10 @@ const branchController = {
     }),
 
     updateBranch: catchAsync(async (req, res) => {
+        const idQuery = req.idQuery;
         const updatedBranch = await branchService.updateBranch(
             req.params.id,
+            idQuery,
             req.body
         );
         return ApiResponse.success(
@@ -59,7 +65,8 @@ const branchController = {
     }),
 
     deleteBranch: catchAsync(async (req, res) => {
-        await branchService.deleteBranch(req.params.id);
+        const idQuery = req.idQuery;
+        await branchService.deleteBranch(req.params.id, idQuery);
         return ApiResponse.success(
             res,
             null,

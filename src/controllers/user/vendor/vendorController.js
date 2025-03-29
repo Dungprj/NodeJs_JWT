@@ -19,7 +19,11 @@ const vendorController = {
 
     // Lấy chi tiết nhà cung cấp theo ID (200 OK | 404 Not Found)
     getVendorById: catchAsync(async (req, res) => {
-        const vendor = await vendorService.getVendorById(req.params.id);
+        const idQuery = req.idQuery;
+        const vendor = await vendorService.getVendorById(
+            req.params.id,
+            idQuery
+        );
         return ApiResponse.success(
             res,
             vendor,
@@ -44,8 +48,10 @@ const vendorController = {
 
     // Cập nhật nhà cung cấp (200 OK | 404 Not Found)
     updateVendor: catchAsync(async (req, res) => {
+        const idQuery = req.idQuery;
         const updatedVendor = await vendorService.updateVendor(
             req.params.id,
+            idQuery,
             req.body
         );
         return ApiResponse.success(

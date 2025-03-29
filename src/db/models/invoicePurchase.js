@@ -7,6 +7,7 @@ const User = require('./user');
 const Vendor = require('./vendor'); // Giả định bạn đã có model Vendor
 const Branch = require('./branch'); // Giả định bạn đã có model Branch
 const CashRegister = require('./cashregister'); // Giả định bạn đã có model CashRegister
+const Product = require('./product');
 
 const InvoicePurchase = sequelize.define(
     'InvoicePurchase',

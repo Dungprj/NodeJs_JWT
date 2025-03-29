@@ -30,8 +30,10 @@ const cashRegisterController = {
     }),
 
     getCashRegisterById: catchAsync(async (req, res) => {
+        const idQuery = req.idQuery;
         const cashRegister = await cashRegisterService.getCashRegisterById(
-            req.params.id
+            req.params.id,
+            idQuery
         );
         return ApiResponse.success(
             res,
@@ -51,14 +53,16 @@ const cashRegisterController = {
             res,
             newCashRegister,
             'Quầy thu ngân đã được tạo thành công',
-            201
+            200
         );
     }),
 
     updateCashRegister: catchAsync(async (req, res) => {
+        const idQuery = req.idQuery;
         const updatedCashRegister =
             await cashRegisterService.updateCashRegister(
                 req.params.id,
+                idQuery,
                 req.body
             );
         return ApiResponse.success(
@@ -70,7 +74,8 @@ const cashRegisterController = {
     }),
 
     deleteCashRegister: catchAsync(async (req, res) => {
-        await cashRegisterService.deleteCashRegister(req.params.id);
+        const idQuery = req.idQuery;
+        await cashRegisterService.deleteCashRegister(req.params.id, idQuery);
         return ApiResponse.success(
             res,
             null,

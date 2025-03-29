@@ -2,7 +2,7 @@ const catchAsync = require('../../../utils/catchAsync');
 const AppError = require('../../../utils/appError');
 const ApiResponse = require('../../../utils/apiResponse'); // Import ApiResponse
 const userProfileService = require('../../../services/user/profile/profileService');
-
+const upload = require('../../../utils/upload'); // Import Multer config
 const userProfileController = {
     // Lấy thông tin hồ sơ người dùng hiện tại (200 OK | 404 Not Found)
     getProfile: catchAsync(async (req, res) => {
@@ -23,22 +23,38 @@ const userProfileController = {
 
     // Cập nhật thông tin hồ sơ người dùng (200 OK | 404 Not Found)
     updateProfile: catchAsync(async (req, res) => {
-        // Giả sử userId được lấy từ req.user (thông qua middleware xác thực)
-        const userId = req.user?.id;
-        if (!userId) {
-            throw new AppError('Không tìm thấy thông tin người dùng', 401);
-        }
+        upload.single('avatar')(req, res, async err => {
+            if (err) {
+                return next(new AppError(err.message, 400)); // Xử lý lỗi upload
+            }
 
-        const updatedData = await userProfileService.updateUser(
-            userId,
-            req.body
-        );
-        return ApiResponse.success(
-            res,
-            updatedData,
-            'Cập nhật hồ sơ thành công',
-            200
-        );
+            // Giả sử userId được lấy từ req.user (thông qua middleware xác thực)
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new AppError('Không tìm thấy thông tin người dùng', 401);
+            }
+
+            // Thêm tên file ảnh vào data
+            const newProfileData = {
+                ...req.body,
+                avatar: req.file ? req.file.filename : null
+            };
+
+            const result = await userProfileService.updateUser(
+                userId,
+                newProfileData
+            );
+
+            if (result.status == 'fail' || result.status == 'error') {
+                return ApiResponse.error(res, result);
+            }
+            return ApiResponse.success(
+                res,
+                updatedData,
+                'Cập nhật hồ sơ thành công',
+                200
+            );
+        });
     }),
     // Cập nhật thông tin hồ sơ người dùng (200 OK | 404 Not Found)
     deleteProfile: catchAsync(async (req, res) => {

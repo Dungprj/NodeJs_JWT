@@ -42,7 +42,12 @@ const userController = {
 
     handleActiveUser: catchAsync(async (req, res) => {
         const id = req.params.id;
-        const updatedUser = await userService.handleActiveUser(id, req.body);
+        const idQuery = req.idQuery;
+        const updatedUser = await userService.handleActiveUser(
+            id,
+            idQuery,
+            req.body
+        );
 
         return ApiResponse.success(
             res,
@@ -55,17 +60,13 @@ const userController = {
         const idQuery = req.idQuery;
 
         const newUser = await userService.addUser(idQuery, req.body);
-        return ApiResponse.success(
-            res,
-            newUser,
-            'Lấy thông tin user thành công',
-            200
-        );
+        return ApiResponse.success(res, newUser, 'Thêm user thành công', 200);
     }),
 
     updateUser: catchAsync(async (req, res) => {
         const id = req.params.id;
-        const updatedUser = await userService.updateUser(id, req.body);
+        const idQuery = req.idQuery;
+        const updatedUser = await userService.updateUser(id, idQuery, req.body);
         return ApiResponse.success(
             res,
             updatedUser,
@@ -76,8 +77,8 @@ const userController = {
 
     setAgainPassword: catchAsync(async (req, res) => {
         const id = req.params.id;
-
-        await userService.setAgainPassword(id, req.body);
+        const idQuery = req.idQuery;
+        await userService.setAgainPassword(id, idQuery, req.body);
         return ApiResponse.success(
             res,
             null,
