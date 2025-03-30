@@ -241,6 +241,7 @@ const productService = {
 
     // Xóa sản phẩm
     deleteProduct: async (id, idQuery) => {
+        console.log('idQuery ---', idQuery);
         const transaction = await Product.sequelize.transaction();
         try {
             if (!id) throw new AppError('ID sản phẩm là bắt buộc', 400);

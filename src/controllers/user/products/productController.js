@@ -83,7 +83,7 @@ const productController = {
 
             return ApiResponse.success(
                 res,
-                newProduct,
+                result,
                 'Sản phẩm đã được tạo thành công',
                 201
             );
@@ -122,7 +122,7 @@ const productController = {
 
             return ApiResponse.success(
                 res,
-                updatedProduct,
+                result,
                 'Cập nhật sản phẩm thành công',
                 200
             );
@@ -131,7 +131,11 @@ const productController = {
 
     // Xóa sản phẩm (204 No Content | 404 Not Found)
     deleteProduct: catchAsync(async (req, res, next) => {
-        const deleted = await productService.deleteProduct(req.params.id);
+        const idQuery = req.idQuery;
+        const deleted = await productService.deleteProduct(
+            req.params.id,
+            idQuery
+        );
 
         if (!deleted) {
             return next(new AppError('Sản phẩm không tồn tại', 404));
