@@ -33,7 +33,9 @@ const profileService = {
             }
 
             // Destructuring dữ liệu từ data với giá trị mặc định
-            const { name, email, address, avatar = null, lang, mode } = data;
+            const { name, email, address, lang, mode } = data;
+
+            const avatar = data.avatar || user.avatar; // Cập nhật ảnh nếu có ảnh mới
 
             // Kiểm tra email nếu có thay đổi (không trùng với email khác)
             if (email && email !== user.email) {
