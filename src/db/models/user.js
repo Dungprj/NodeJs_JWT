@@ -8,6 +8,8 @@ const AppError = require('../../utils/appError');
 const Role = require('./roles');
 const Unit = require('./unit');
 
+const checkPlanLimits = require('../../middleware/checkPlanLimits');
+
 const User = sequelize.define(
     'User',
     {

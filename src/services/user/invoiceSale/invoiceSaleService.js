@@ -17,7 +17,15 @@ const invoiceSaleService = {
         const invoiceSales = await InvoiceSale.findAll({
             where: { created_by: idQuery },
             include: [
-                { model: InvoiceSaleDetail, as: 'details' },
+                {
+                    model: InvoiceSaleDetail,
+                    as: 'details',
+                    include: {
+                        model: Product,
+                        as: 'product',
+                        attributes: ['id', 'name']
+                    }
+                },
                 {
                     model: Customer,
                     as: 'Customer',

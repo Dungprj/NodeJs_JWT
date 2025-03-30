@@ -19,7 +19,12 @@ const invoicePurchaseService = {
             include: [
                 {
                     model: InvoicePurchaseDetail,
-                    as: 'details'
+                    as: 'details',
+                    include: {
+                        model: Product,
+                        as: 'product',
+                        attributes: ['id', 'name']
+                    }
                 },
                 {
                     model: Vendor,
