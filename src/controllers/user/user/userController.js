@@ -5,8 +5,10 @@ const userService = require('../../../services/user/user/userService');
 const userController = {
     getListUser: catchAsync(async (req, res) => {
         const idQuery = req.idQuery;
+        const page = parseInt(req.query.page) || 1; // Lấy số trang từ query, mặc định là 1
+        const limit = parseInt(req.query.limit) || 10;
 
-        const users = await userService.getListUser(idQuery);
+        const users = await userService.getListUser(idQuery, page, limit);
         return ApiResponse.success(
             res,
             {

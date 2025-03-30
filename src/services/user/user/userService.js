@@ -10,27 +10,47 @@ const { Op } = require('sequelize');
 const userService = {
     getListUser: async idQuery => {
         const users = await User.findAll({
+            attributes: {
+                exclude: ['password', 'confirmPassword', 'deletedAt']
+            },
             where: {
                 parent_id: idQuery
             }
         });
 
-        if (users.length <= 0) {
+        if (!users) {
             throw new AppError('List User not found', 404);
         }
 
-        const result = users.map(u => {
-            const res = u.toJSON();
+        return users;
+    },
 
-            delete res.password;
-
-            delete res.confirmPassword;
-
-            delete res.deletedAt;
-            return res;
+    getListUserPhanTrang: async (idQuery, page = 1, limit = 10) => {
+        const offset = (page - 1) * limit; // Tính offset dựa trên trang hiện tại
+        const { count, rows } = await User.findAndCountAll({
+            attributes: {
+                exclude: ['password', 'confirmPassword', 'deletedAt']
+            },
+            limit: limit, // Số bản ghi mỗi trang
+            offset: offset, // Bỏ qua số bản ghi trước đó
+            where: {
+                parent_id: idQuery
+            }
         });
 
-        return result;
+        // Tính tổng số trang
+        const totalPages = Math.ceil(count / limit);
+
+        if (count <= 0) {
+            throw new AppError('List User not found', 404);
+        }
+
+        return {
+            totalItems: count, // Tổng số bản ghi
+            totalPages: totalPages, // Tổng số trang
+            currentPage: page, // Trang hiện tại
+            users: rows // Dữ liệu người dùng
+        };
     },
 
     getUserById: async (id, idQuery) => {

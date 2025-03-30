@@ -5,6 +5,8 @@ const InvoiceSaleDetail = require('../../../db/models/invoicesaledetail');
 const Product = require('../../../db/models/product');
 const Customer = require('../../../db/models/customer');
 const Branch = require('../../../db/models/branch');
+const Tax = require('../../../db/models/tax');
+
 const CashRegister = require('../../../db/models/cashregister');
 
 const AppError = require('../../../utils/appError');
