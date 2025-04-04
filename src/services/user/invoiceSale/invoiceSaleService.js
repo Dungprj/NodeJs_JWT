@@ -97,6 +97,7 @@ const invoiceSaleService = {
             !data.branchId ||
             !data.products ||
             !data.cashRegisterId ||
+            !data.paied ||
             !Array.isArray(data.products) ||
             data.products.length === 0
         ) {
@@ -172,6 +173,7 @@ const invoiceSaleService = {
                     branch_id: data.branchId,
                     cash_register_id: data.cashRegisterId,
                     status: data.status ?? 2,
+                    paied: data.paied || 0,
                     created_by: idQuery
                 },
                 { transaction }
@@ -251,6 +253,7 @@ const invoiceSaleService = {
             if (data.customerId) invoiceSale.customer_id = data.customerId;
             if (data.status) invoiceSale.status = data.status;
             if (data.tax !== undefined) invoicePurchase.tax = data.tax;
+            if (data.paied !== undefined) invoicePurchase.paied = data.paied;
 
             if (
                 data.products &&
