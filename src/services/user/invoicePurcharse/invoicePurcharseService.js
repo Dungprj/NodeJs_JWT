@@ -255,6 +255,7 @@ const invoicePurchaseService = {
                 invoicePurchase.vendor_id = data.vendor_id;
             if (data.status !== undefined) invoicePurchase.status = data.status;
             if (data.tax !== undefined) invoicePurchase.tax = data.tax;
+            if (data.paied !== undefined) invoicePurchase.paied = data.paied;
 
             if (
                 data.products &&
