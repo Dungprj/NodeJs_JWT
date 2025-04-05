@@ -93,18 +93,28 @@ const invoiceSaleService = {
     // Tạo hóa đơn bán hàng mới (201 Created | 400 Bad Request)
 
     createInvoiceSale: async (data, idQuery) => {
-        if (
-            !data.branchId ||
-            !data.products ||
-            !data.cashRegisterId ||
-            !data.paied ||
-            !Array.isArray(data.products) ||
-            data.products.length === 0
-        ) {
-            throw new AppError(
-                'Chi nhánh và danh sách sản phẩm là bắt buộc',
-                400
-            );
+        if (data.branchId == undefined) {
+            throw new AppError('Chi nhánh là bắt buộc', 400);
+        }
+
+        if (data.products == undefined) {
+            throw new AppError('Danh sách sản phẩm là bắt buộc', 400);
+        }
+
+        if (data.cashRegisterId == undefined) {
+            throw new AppError('Mã quầy thu ngân là bắt buộc', 400);
+        }
+
+        if (data.paied == undefined) {
+            throw new AppError('Trạng thái thanh toán là bắt buộc', 400);
+        }
+
+        if (Array.isArray(data.products) == false) {
+            throw new AppError('Danh sách sản phẩm phải là một mảng', 400);
+        }
+
+        if (data.products.length == 0) {
+            throw new AppError('Danh sách sản phẩm không được để trống', 400);
         }
 
         const transaction = await InvoiceSale.sequelize.transaction();
