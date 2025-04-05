@@ -36,6 +36,11 @@ const InvoiceSale = sequelize.define(
             type: DataTypes.INTEGER,
             defaultValue: 0
         },
+        paied: {
+            allowNull: true,
+            type: DataTypes.DOUBLE,
+            defaultValue: 0
+        },
         status: {
             type: DataTypes.TINYINT,
             allowNull: false,

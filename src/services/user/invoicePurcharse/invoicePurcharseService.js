@@ -93,6 +93,7 @@ const invoicePurchaseService = {
             !data.branchId ||
             !data.products ||
             !data.cashRegisterId ||
+            !data.paied ||
             !Array.isArray(data.products) ||
             data.products.length === 0
         ) {
@@ -167,6 +168,8 @@ const invoicePurchaseService = {
                     branch_id: data.branchId,
                     cash_register_id: data.cashRegisterId || 0,
                     status: data.status ?? 2,
+                    paied: data.paied ?? 0,
+
                     created_by: idQuery
                 },
                 { transaction }
