@@ -15,7 +15,7 @@ const userController = {
                 lenght: users.length,
                 users
             },
-            'Lấy danh sách user thành công CỐC',
+            'Lấy danh sách user thành công',
             200
         );
     }),
