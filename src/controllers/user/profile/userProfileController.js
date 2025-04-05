@@ -50,7 +50,7 @@ const userProfileController = {
             }
             return ApiResponse.success(
                 res,
-                updatedData,
+                result,
                 'Cập nhật hồ sơ thành công',
                 200
             );
