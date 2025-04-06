@@ -2,7 +2,7 @@ const redis = require('redis');
 require('dotenv').config();
 // Tạo client Redis cho localhost
 const redisClient = redis.createClient({
-    url: process.env.REDIS_HOST || 'redis://localhost:6379' // Mặc định localhost, port 6379
+    url: process.env.REDIS_HOST || 'redis://localhost:6388' // Mặc định localhost, port 6379
 });
 
 //redis cloud

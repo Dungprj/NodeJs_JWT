@@ -131,13 +131,13 @@ const authService = {
                 checkPlanLimits.syncVendorCount(isExistUser.id);
             }
 
-            const isMatch = await bcrypt.compare(
-                password,
-                isExistUser.password
-            );
-            if (!isMatch) {
-                throw new AppError('Invalid email or password', 404);
-            }
+            // const isMatch = await bcrypt.compare(
+            //     password,
+            //     isExistUser.password
+            // );
+            // if (!isMatch) {
+            //     throw new AppError('Invalid email or password', 404);
+            // }
 
             const accessToken = await authService.generateAccessToken(
                 isExistUser

@@ -17,6 +17,17 @@ const permissionController = {
             'Lấy danh sách quyền thành công',
             200
         );
+    }),
+    getMyPermission: catchAsync(async (req, res) => {
+        const myType = req.type;
+        const permissions = await permissionService.getMyPermission(myType);
+
+        return ApiResponse.success(
+            res,
+            permissions,
+            'Lấy danh sách quyền thành công',
+            200
+        );
     })
 };
 

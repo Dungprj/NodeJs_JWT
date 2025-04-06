@@ -21,6 +21,12 @@ module.exports = {
             cash_register_id: {
                 type: Sequelize.INTEGER
             },
+            paied: {
+                allowNull: true,
+                type: Sequelize.DOUBLE,
+                defaultValue: 0
+            },
+
             status: {
                 type: Sequelize.TINYINT
             },

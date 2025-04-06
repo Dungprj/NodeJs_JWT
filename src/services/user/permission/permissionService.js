@@ -124,6 +124,35 @@ const permissionService = {
         });
 
         return groupByLastWord(permissions);
+    },
+    getMyPermission: async myType => {
+        //get permissions by roleId = 2 and roleName = Onwer ngoại trừ buy plan and manager plan
+        const permissions = await Permission.findAll({
+            attributes: ['id', 'name'],
+            include: [
+                {
+                    model: Role,
+                    attributes: [],
+                    as: 'Permission_roles',
+                    where: {
+                        name: myType
+                    },
+                    through: {
+                        model: RolePermission,
+                        attributes: [],
+                        as: 'Permission_roles'
+                    }
+                }
+            ],
+            where: {
+                id: {
+                    [Op.notIn]: [95, 98] // Loại trừ id 95 và 98 (manager plan and buy plan)
+                }
+            },
+            raw: false
+        });
+
+        return groupByLastWord(permissions);
     }
 };
 

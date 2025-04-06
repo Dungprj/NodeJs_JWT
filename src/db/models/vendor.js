@@ -3,7 +3,7 @@ const { DataTypes } = require('sequelize');
 
 const sequelize = require('../../config/database');
 const AppError = require('../../utils/appError');
-const User = require('./user');
+
 const Vendor = sequelize.define(
     'Vendor',
     {
