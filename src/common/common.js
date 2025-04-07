@@ -3,9 +3,9 @@ const Token = require('../db/models/token');
 const RolePermission = require('../db/models/rolepermissions');
 const Role = require('../db/models/roles');
 const Permission = require('../db/models/permissions');
-
+const { Op } = require('sequelize');
 const commom = {
-    getListPermission: async isExistUser => {
+    getListPermission: async type => {
         const permissions = await Permission.findAll({
             attributes: ['id', 'name'],
             include: [
@@ -14,7 +14,7 @@ const commom = {
                     attributes: [],
                     as: 'Permission_roles',
                     where: {
-                        name: isExistUser.type
+                        name: type
                     },
                     through: {
                         model: RolePermission,
@@ -61,6 +61,44 @@ const commom = {
         const value = parseInt(match[1], 10);
         const unit = match[2];
         return value * units[unit];
+    },
+    LogoutTaiKhoanNhanVien: async idParent => {
+        try {
+            // Lấy danh sách id nhân viên
+            const users = await User.findAll({
+                where: {
+                    parent_id: idParent
+                }
+            });
+
+            // Nếu không có nhân viên nào, dừng lại
+            if (users.length === 0) {
+                return;
+            }
+
+            // Lấy tất cả các token của người dùng có idParent
+            const tokens = await Token.findAll({
+                where: {
+                    userId: {
+                        [Op.in]: users.map(u => u.id) // Sửa lại biến `user` tránh trùng tên
+                    }
+                }
+            });
+
+            // Nếu không có token nào, dừng lại
+            if (tokens.length === 0) {
+                return;
+            }
+
+            // Xóa tất cả các token
+            await Promise.all(tokens.map(token => token.destroy()));
+        } catch (error) {
+            console.error(
+                'Có lỗi xảy ra khi đăng xuất tài khoản nhân viên: ',
+                error
+            );
+            throw error;
+        }
     }
 };
 

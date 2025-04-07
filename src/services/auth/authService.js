@@ -171,7 +171,9 @@ const authService = {
             }
 
             //Truy vấn database để lấy danh sách quyền dựa trên idRole
-            const permissions = await commom.getListPermission(isExistUser);
+            const permissions = await commom.getListPermission(
+                isExistUser.type
+            );
             console.log('permissions: ' + permissions);
 
             const [roleId] = await Promise.all([
@@ -188,6 +190,12 @@ const authService = {
                 })
             ]);
 
+            const parent = await User.findOne({
+                where: {
+                    id: isExistUser.parent_id
+                }
+            });
+
             return {
                 message: 'Login successful',
                 accessToken: accessToken,
@@ -196,6 +204,7 @@ const authService = {
                     id: isExistUser.id,
                     email: email,
                     name: isExistUser.name,
+                    parentName: parent.name,
                     roleId: roleId[0].id,
                     roleName: isExistUser.type
                 },

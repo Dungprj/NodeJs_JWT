@@ -3,6 +3,7 @@ const AppError = require('../../../utils/appError');
 const ApiResponse = require('../../../utils/apiResponse'); // Import ApiResponse
 const userProfileService = require('../../../services/user/profile/profileService');
 const upload = require('../../../utils/upload'); // Import Multer config
+const commom = require('../../../common/common');
 const userProfileController = {
     // Lấy thông tin hồ sơ người dùng hiện tại (200 OK | 404 Not Found)
     getProfile: catchAsync(async (req, res) => {
@@ -13,6 +14,7 @@ const userProfileController = {
         }
 
         const data = await userProfileService.getProfile(userId);
+
         return ApiResponse.success(
             res,
             data,
@@ -48,6 +50,12 @@ const userProfileController = {
             if (result.status == 'fail' || result.status == 'error') {
                 return ApiResponse.error(res, result);
             }
+
+            // neu la chu quan thi logout tat ca tai khoan nhan vien
+
+            if (req.type == 'Owner') {
+                await commom.LogoutTaiKhoanNhanVien(userId);
+            }
             return ApiResponse.success(
                 res,
                 result,
@@ -64,6 +72,12 @@ const userProfileController = {
             throw new AppError('Không tìm thấy thông tin người dùng', 401);
         }
         const profileUser = await userProfileService.deleteUser(userId);
+
+        // neu la chu quan thi logout tat ca tai khoan nhan vien
+
+        if (req.type == 'Owner') {
+            await commom.LogoutTaiKhoanNhanVien(userId);
+        }
         return ApiResponse.success(res, null, 'xóa hồ sơ thành công', 204);
     })
 };

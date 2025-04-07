@@ -57,18 +57,18 @@ const middleware = {
         });
 
         if (!token) {
-            throw new AppError('Token is missing', 400);
+            throw new AppError('Token is missing', 401);
         }
         if (!accessTokenRecord) {
-            throw new AppError('Invalid access token not found ', 400);
+            throw new AppError('Invalid access token not found ', 401);
         }
 
         if (!accessTokenRecord.accessIsValid) {
-            throw new AppError('Invalid access token ', 400);
+            throw new AppError('Invalid access token ', 401);
         }
 
         if (accessTokenRecord.accessExpireAt < new Date()) {
-            throw new AppError('expired access token ', 413);
+            throw new AppError('expired access token ', 401);
         }
         //check isvalid access token
         jwt.verify(
