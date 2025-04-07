@@ -203,6 +203,7 @@ const authService = {
                 user: {
                     id: isExistUser.id,
                     email: email,
+                    avatar: isExistUser.avatar,
                     name: isExistUser.name,
                     parentName: parent.name,
                     roleId: roleId[0].id,

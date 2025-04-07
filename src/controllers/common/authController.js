@@ -53,6 +53,8 @@ const authController = {
                     email: email,
                     userTitle: data.user.name,
                     parentName: data.user.parentName,
+                    avatar: data.user.avatar,
+
                     databaseId: data.user.id,
                     roles: [
                         {

@@ -75,6 +75,12 @@ const InvoicePurchase = sequelize.define(
 );
 
 // Định nghĩa mối quan hệ
+InvoicePurchase.belongsTo(User, {
+    foreignKey: 'created_by',
+    as: 'user'
+});
+
+// Định nghĩa mối quan hệ
 InvoicePurchase.belongsTo(Vendor, {
     foreignKey: 'vendor_id',
     as: 'vendor'

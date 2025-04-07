@@ -10,6 +10,7 @@ const Branch = require('../../../db/models/branch');
 
 const AppError = require('../../../utils/appError');
 const Tax = require('../../../db/models/tax');
+const User = require('../../../db/models/user');
 
 const invoicePurchaseService = {
     // Lấy tất cả hóa đơn nhập hàng của user (200 OK | 404 Not Found)
@@ -25,6 +26,11 @@ const invoicePurchaseService = {
                         as: 'product',
                         attributes: ['id', 'name']
                     }
+                },
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'name', 'email']
                 },
                 {
                     model: Vendor,
@@ -62,6 +68,11 @@ const invoicePurchaseService = {
                         as: 'product',
                         attributes: ['id', 'name']
                     }
+                },
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'name', 'email']
                 },
                 {
                     model: Vendor,
