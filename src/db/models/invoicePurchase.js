@@ -38,6 +38,11 @@ const InvoicePurchase = sequelize.define(
             allowNull: false, // NOT NULL
             defaultValue: 0 // DEFAULT 0
         },
+        paied: {
+            allowNull: true,
+            type: DataTypes.DOUBLE,
+            defaultValue: 0
+        },
         status: {
             type: DataTypes.TINYINT,
             allowNull: false,

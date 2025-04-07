@@ -105,17 +105,28 @@ const invoiceSaleService = {
     // Tạo hóa đơn bán hàng mới (201 Created | 400 Bad Request)
 
     createInvoiceSale: async (data, idQuery) => {
-        if (
-            !data.branchId ||
-            !data.products ||
-            !data.cashRegisterId ||
-            !Array.isArray(data.products) ||
-            data.products.length === 0
-        ) {
-            throw new AppError(
-                'Chi nhánh và danh sách sản phẩm là bắt buộc',
-                400
-            );
+        if (data.branchId == undefined) {
+            throw new AppError('Chi nhánh là bắt buộc', 400);
+        }
+
+        if (data.products == undefined) {
+            throw new AppError('Danh sách sản phẩm là bắt buộc', 400);
+        }
+
+        if (data.cashRegisterId == undefined) {
+            throw new AppError('Cash register ID là bắt buộc', 400);
+        }
+
+        if (data.paied == undefined) {
+            throw new AppError('paied là bắt buộc', 400);
+        }
+
+        if (Array.isArray(data.products) == false) {
+            throw new AppError('Danh sách sản phẩm phải là một mảng', 400);
+        }
+
+        if (data.products.length === 0) {
+            throw new AppError('Danh sách sản phẩm không được để trống', 400);
         }
 
         const transaction = await InvoiceSale.sequelize.transaction();
@@ -184,6 +195,7 @@ const invoiceSaleService = {
                     branch_id: data.branchId,
                     cash_register_id: data.cashRegisterId,
                     status: data.status ?? 2,
+                    paied: data.paied ?? 0,
                     created_by: idQuery
                 },
                 { transaction }
@@ -262,7 +274,8 @@ const invoiceSaleService = {
                 invoiceSale.cash_register_id = data.cashRegisterId;
             if (data.customerId) invoiceSale.customer_id = data.customerId;
             if (data.status) invoiceSale.status = data.status;
-            if (data.tax !== undefined) invoicePurchase.tax = data.tax;
+            if (data.tax !== undefined) invoiceSale.tax = data.tax;
+            if (data.paied !== undefined) invoiceSale.paied = data.paied;
 
             if (
                 data.products &&
