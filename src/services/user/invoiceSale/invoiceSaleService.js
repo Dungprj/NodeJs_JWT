@@ -11,6 +11,7 @@ const CashRegister = require('../../../db/models/cashregister');
 
 const AppError = require('../../../utils/appError');
 const User = require('../../../db/models/user');
+const commom = require('../../../common/common');
 
 const invoiceSaleService = {
     // Lấy tất cả hóa đơn bán hàng của user (200 OK | 404 Not Found)
@@ -58,6 +59,105 @@ const invoiceSaleService = {
             );
         }
         return invoiceSales;
+    },
+
+    generateQRCode: async (idQuery, id) => {
+        const invoiceSales = await InvoiceSale.findAll({
+            where: { created_by: idQuery, id: id },
+            raw: true,
+            include: [
+                {
+                    model: InvoiceSaleDetail,
+                    as: 'details',
+                    include: {
+                        model: Product,
+                        as: 'product',
+                        attributes: ['id', 'name']
+                    }
+                },
+
+                {
+                    model: User,
+                    as: 'User',
+                    attributes: ['id', 'name', 'email']
+                },
+                {
+                    model: Customer,
+                    as: 'Customer',
+                    attributes: ['id', 'name']
+                },
+                {
+                    model: Branch,
+                    as: 'branch',
+                    attributes: ['id', 'name']
+                },
+                {
+                    model: CashRegister,
+                    as: 'cashRegister',
+                    attributes: ['id', 'name']
+                }
+            ]
+        });
+        if (!invoiceSales) {
+            throw new AppError('Không tìm thấy hóa đơn nhập hàng', 404);
+        }
+
+        console.log('invoide :', invoiceSales);
+
+        const invoice = invoiceSales.map(invoice => {
+            return {
+                id: invoice.id,
+                created_at: invoice.created_at,
+                invoiceTo: invoice['Customer.name'],
+                invoiceFrom: invoice['User.name'],
+                product: {
+                    id: invoice['details.price'],
+                    name: invoice['details.product.name'],
+                    price: invoice['details.price'],
+                    quantity: invoice['details.quantity'],
+                    tax: invoice['details.tax']
+                }
+            };
+        });
+
+        console.log('invoice detail :', invoice);
+
+        let sumTotal = 0;
+
+        const listItems = invoice.map(item => {
+            const taxCalc =
+                item.product.price *
+                item.product.quantity *
+                (item.product.tax / 100);
+
+            const totalCalc =
+                item.product.price * item.product.quantity + taxCalc;
+
+            sumTotal += totalCalc;
+            return {
+                name: item.product.name || 'unknow',
+                quantity: item.product.quantity || 0,
+                price: commom.formatCurrency(item.product.price) || 0,
+                tax: `${item.product.tax}%`,
+                taxAmount: commom.formatCurrency(taxCalc) || 0,
+                total: commom.formatCurrency(totalCalc) || 0
+            };
+        });
+
+        const dataPrepare = {
+            invoiceNumber: `PUR${invoice[0].id}` || 'unknow',
+            date: invoice[0].created_at || 'unknow',
+            invoiceTo: invoice[0].invoiceTo || 'unknow',
+            invoiceFrom: invoice[0].invoiceFrom || 'unknow',
+            items: listItems || [],
+            total: commom.formatCurrency(sumTotal) || 'unknow'
+        };
+
+        console.log('dữ liệu chuẩn bị : ', dataPrepare);
+
+        const testUrl = commom.generateInvoiceUrl(dataPrepare);
+
+        return testUrl;
     },
 
     // Lấy hóa đơn bán hàng theo ID (200 OK | 404 Not Found)

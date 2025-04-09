@@ -11,6 +11,12 @@ invoicePurchaseRoute.get(
     checkPermission(PERMISSION.MANAGE_PURCHASES),
     invoicePurcharseController.getListInvoicePurchase
 );
+
+invoicePurchaseRoute.get(
+    '/getQRcode/:id',
+    checkPermission(PERMISSION.MANAGE_PURCHASES),
+    invoicePurcharseController.getQRcodeInvoicePurchaseById
+);
 invoicePurchaseRoute.get(
     '/:id',
     checkPermission(PERMISSION.MANAGE_PURCHASES),

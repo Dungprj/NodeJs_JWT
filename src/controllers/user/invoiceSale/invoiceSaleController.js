@@ -17,6 +17,21 @@ const invoiceSaleController = {
         );
     }),
 
+    // Lấy hóa đơn nhập hàng theo ID (GET /api/invoice-purchases/:id)
+    getQRcodeInvoiceSaleById: catchAsync(async (req, res) => {
+        const idQuery = req.idQuery;
+        const invoiceSale = await invoiceSaleService.generateQRCode(
+            idQuery,
+            req.params.id
+        );
+        return ApiResponse.success(
+            res,
+            invoiceSale,
+            'Lấy link QR hóa đơn bán hàng thành công',
+            200
+        );
+    }),
+
     // Lấy hóa đơn bán hàng theo ID (GET /api/invoice-sales/:id)
     getInvoiceSaleById: catchAsync(async (req, res) => {
         const idQuery = req.idQuery;

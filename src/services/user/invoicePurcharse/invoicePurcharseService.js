@@ -11,6 +11,7 @@ const Branch = require('../../../db/models/branch');
 const AppError = require('../../../utils/appError');
 const Tax = require('../../../db/models/tax');
 const User = require('../../../db/models/user');
+const commom = require('../../../common/common');
 
 const invoicePurchaseService = {
     // Lấy tất cả hóa đơn nhập hàng của user (200 OK | 404 Not Found)
@@ -96,6 +97,102 @@ const invoicePurchaseService = {
             throw new AppError('Không tìm thấy hóa đơn nhập hàng', 404);
         }
         return invoicePurchase;
+    },
+
+    generateQRCode: async (idQuery, id) => {
+        const invoicePurchase = await InvoicePurchase.findAll({
+            include: [
+                {
+                    model: InvoicePurchaseDetail,
+                    as: 'details',
+                    include: {
+                        model: Product,
+                        as: 'product',
+                        attributes: ['id', 'name']
+                    }
+                },
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'name', 'email']
+                },
+                {
+                    model: Vendor,
+                    as: 'vendor',
+                    attributes: ['id', 'name']
+                },
+                {
+                    model: CashRegister,
+                    as: 'cashRegister',
+                    attributes: ['id', 'name']
+                },
+                {
+                    model: Branch,
+                    as: 'branch',
+                    attributes: ['id', 'name']
+                }
+            ],
+            raw: true,
+            where: { created_by: idQuery, id: id }
+        });
+        if (!invoicePurchase) {
+            throw new AppError('Không tìm thấy hóa đơn nhập hàng', 404);
+        }
+
+        const invoice = invoicePurchase.map(invoice => {
+            return {
+                id: invoice.id,
+                created_at: invoice.created_at,
+                invoiceTo: invoice['user.name'],
+                invoiceFrom: invoice['vendor.name'],
+                product: {
+                    id: invoice['details.price'],
+                    name: invoice['details.product.name'],
+                    price: invoice['details.price'],
+                    quantity: invoice['details.quantity'],
+                    tax: invoice['details.tax']
+                }
+            };
+        });
+
+        console.log('invoice detail :', invoice);
+
+        let sumTotal = 0;
+
+        const listItems = invoice.map(item => {
+            const taxCalc =
+                item.product.price *
+                item.product.quantity *
+                (item.product.tax / 100);
+
+            const totalCalc =
+                item.product.price * item.product.quantity + taxCalc;
+
+            sumTotal += totalCalc;
+            return {
+                name: item.product.name || 'unknow',
+                quantity: item.product.quantity || 0,
+                price: commom.formatCurrency(item.product.price) || 0,
+                tax: `${item.product.tax}%` || 0,
+                taxAmount: commom.formatCurrency(taxCalc) || 0,
+                total: commom.formatCurrency(totalCalc) || 0
+            };
+        });
+
+        const dataPrepare = {
+            invoiceNumber: `PUR${invoice[0].id}` || 'unknow',
+            date: invoice[0].created_at || 'unknow',
+            invoiceTo: invoice[0].invoiceTo || 'unknow',
+            invoiceFrom: invoice[0].invoiceFrom || 'unknow',
+            items: listItems || [],
+            total: commom.formatCurrency(sumTotal) || 0
+        };
+
+        console.log('dữ liệu chuẩn bị : ', dataPrepare);
+
+        const testUrl = commom.generateInvoiceUrl(dataPrepare);
+
+        return testUrl;
     },
 
     // Tạo hóa đơn nhập hàng mới (201 Created | 400 Bad Request)

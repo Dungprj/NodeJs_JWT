@@ -5,6 +5,24 @@ const Role = require('../db/models/roles');
 const Permission = require('../db/models/permissions');
 const { Op } = require('sequelize');
 const commom = {
+    formatCurrency: amount => {
+        // Chuyển đổi amount thành số nếu nó là chuỗi
+        const number = parseFloat(amount.toString().replace(/[^0-9.-]+/g, ''));
+        return number.toLocaleString('vi-VN') + 'đ';
+    },
+    generateInvoiceUrl: invoiceData => {
+        const data = { ...invoiceData };
+        const jsonString = JSON.stringify(data);
+        const safeString = encodeURIComponent(jsonString); // Xử lý ký tự Unicode
+        const encodedData = btoa(safeString);
+
+        const params = new URLSearchParams();
+        params.set('data', encodedData);
+
+        const baseUrl = process.env.BASE_URL_GENERATE_QR;
+        return `${baseUrl}?${params.toString()}`;
+    },
+
     getListPermission: async type => {
         const permissions = await Permission.findAll({
             attributes: ['id', 'name'],

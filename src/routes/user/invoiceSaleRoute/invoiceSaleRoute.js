@@ -11,6 +11,12 @@ invoiceSaleRoute.get(
     checkPermission(PERMISSION.MANAGE_SALES),
     invoiceSaleController.getListInvoiceSale
 );
+
+invoiceSaleRoute.get(
+    '/getQRcode/:id',
+    checkPermission(PERMISSION.MANAGE_SALES),
+    invoiceSaleController.getQRcodeInvoiceSaleById
+);
 invoiceSaleRoute.get(
     '/:id',
     checkPermission(PERMISSION.MANAGE_SALES),
