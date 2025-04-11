@@ -14,6 +14,10 @@ const userProfileRoutes = require('./userProfileRoute/userProfileRoute');
 const userManagerRoutes = require('./managerUserRoute/managerUserRoute');
 const vendorRoutes = require('./vendorRoute/vendorRoute');
 const customerRoutes = require('./customerRoute/customerRoute');
+
+const categroyExpenseRoutes = require('./categoryExpenseRoute/categoryExpenseRoute');
+const expenseRoutes = require('./expensiveRoute/expensiveRoute');
+
 const productReturnRoutes = require('./productReturnRoute/productReturnRoute');
 
 const invoicePurcharseRoutes = require('./invoicePurchaseRoute/invoicePurchaseRoute');
@@ -38,5 +42,7 @@ routerUser.use('/vendor', vendorRoutes);
 routerUser.use('/customer', customerRoutes);
 routerUser.use('/productReturn', productReturnRoutes);
 routerUser.use('/profile', userProfileRoutes);
+routerUser.use('/categoryExpense', categroyExpenseRoutes);
+routerUser.use('/expense', expenseRoutes);
 
 module.exports = routerUser;
