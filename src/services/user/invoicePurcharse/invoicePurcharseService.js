@@ -31,7 +31,7 @@ const invoicePurchaseService = {
                 {
                     model: User,
                     as: 'user',
-                    attributes: ['id', 'name', 'email']
+                    attributes: ['id', 'name', 'email', 'address']
                 },
                 {
                     model: Vendor,
@@ -73,7 +73,7 @@ const invoicePurchaseService = {
                 {
                     model: User,
                     as: 'user',
-                    attributes: ['id', 'name', 'email']
+                    attributes: ['id', 'name', 'email', 'address']
                 },
                 {
                     model: Vendor,
@@ -114,7 +114,7 @@ const invoicePurchaseService = {
                 {
                     model: User,
                     as: 'user',
-                    attributes: ['id', 'name', 'email']
+                    attributes: ['id', 'name', 'email', 'address']
                 },
                 {
                     model: Vendor,

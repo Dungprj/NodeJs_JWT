@@ -31,8 +31,8 @@ const invoiceSaleService = {
 
                 {
                     model: User,
-                    as: 'User',
-                    attributes: ['id', 'name', 'email']
+                    as: 'user',
+                    attributes: ['id', 'name', 'email', 'address']
                 },
                 {
                     model: Customer,
@@ -78,8 +78,8 @@ const invoiceSaleService = {
 
                 {
                     model: User,
-                    as: 'User',
-                    attributes: ['id', 'name', 'email']
+                    as: 'user',
+                    attributes: ['id', 'name', 'email', 'address']
                 },
                 {
                     model: Customer,
@@ -175,8 +175,8 @@ const invoiceSaleService = {
                 },
                 {
                     model: User,
-                    as: 'User',
-                    attributes: ['id', 'name', 'email']
+                    as: 'user',
+                    attributes: ['id', 'name', 'email', 'address']
                 },
                 {
                     model: Customer,

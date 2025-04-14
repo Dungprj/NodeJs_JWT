@@ -79,7 +79,7 @@ const InvoiceSale = sequelize.define(
 // // Định nghĩa mối quan hệ
 InvoiceSale.belongsTo(User, {
     foreignKey: 'created_by',
-    as: 'User'
+    as: 'user'
 });
 
 // // Định nghĩa mối quan hệ

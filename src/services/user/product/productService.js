@@ -164,16 +164,18 @@ const productService = {
             });
             if (!product) throw new AppError('Sản phẩm không tồn tại', 404);
 
-            const isExistProductName = await Product.findOne({
-                where: {
-                    name: data.name,
-                    created_by: idQuery,
-                    id: { [Op.ne]: id } // Loại bỏ danh mục hiện tại khỏi kết quả
-                }
-            });
+            if (data.name != undefined) {
+                const isExistProductName = await Product.findOne({
+                    where: {
+                        name: data.name,
+                        created_by: idQuery,
+                        id: { [Op.ne]: id } // Loại bỏ danh mục hiện tại khỏi kết quả
+                    }
+                });
 
-            if (isExistProductName) {
-                return new AppError('Tên sản phẩm đã tồn tại', 409);
+                if (isExistProductName) {
+                    return new AppError('Tên sản phẩm đã tồn tại', 409);
+                }
             }
 
             // Kiểm tra và cập nhật ảnh nếu có
