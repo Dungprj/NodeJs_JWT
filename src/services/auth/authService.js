@@ -18,6 +18,7 @@ const { json } = require('express');
 const commom = require('../../common/common');
 
 const checkPlanLimits = require('../../middleware/checkPlanLimits');
+const Plan = require('../../db/models/plan');
 
 require('dotenv').config();
 
@@ -48,7 +49,7 @@ const authService = {
         is_active = 0,
         user_status = 0,
         remember_token = null,
-        created_at = null,
+        created_at = Date(),
         updated_at = null,
         last_login_at = null
     ) => {
@@ -62,6 +63,13 @@ const authService = {
         if (isExistUser) {
             throw new AppError('Email already exists', 409);
         }
+
+        const planCurrent = await Plan.findByPk(plan_id);
+
+        const calcPlanExpire = commom.calculateEndTime(
+            created_at,
+            planCurrent.duration
+        );
 
         const newUser = await User.create({
             email: email,
@@ -78,7 +86,7 @@ const authService = {
             lang: lang,
             mode: mode,
             plan_id: plan_id,
-            plan_expire_date: plan_expire_date,
+            plan_expire_date: calcPlanExpire,
             plan_requests: plan_requests,
             is_active: is_active,
             user_status: user_status,
@@ -100,6 +108,10 @@ const authService = {
 
         delete result.deletedAt;
 
+        //tính toán hết hạn khi mới đăng ký
+
+        await newUser.save();
+
         // Trả về response
         return result;
     },
@@ -108,10 +120,15 @@ const authService = {
             //kiem tra user co ton tai hay chua
             //kiem tra co ton tai khong
             const isExistUser = await User.findOne({
+                include: {
+                    model: Plan
+                },
                 where: {
                     email: email
                 }
             });
+
+            console.log('thong tin user ', isExistUser);
 
             //neu user khong ton tai
             if (!isExistUser) {
@@ -207,6 +224,10 @@ const authService = {
                     name: isExistUser.name,
                     parentName: parent.name,
                     roleId: roleId[0].id,
+                    planId: isExistUser.plan_id,
+                    planName: isExistUser.Plan.dataValues.name,
+                    planDuration: planDuration,
+                    planExpire: isExistUser.plan_expire_date,
                     roleName: isExistUser.type
                 },
                 permissions: permissions

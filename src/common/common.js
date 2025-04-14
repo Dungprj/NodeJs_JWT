@@ -23,6 +23,37 @@ const commom = {
         return `${baseUrl}?${params.toString()}`;
     },
 
+    calculateEndTime: (startTime, type) => {
+        // Chuyển startTime thành đối tượng Date
+        const startDate = new Date(startTime);
+
+        // Kiểm tra startTime hợp lệ
+        if (isNaN(startDate.getTime())) {
+            throw new Error('Thời gian bắt đầu không hợp lệ');
+        }
+
+        // Tạo bản sao của startDate để tránh thay đổi giá trị gốc
+        const endDate = new Date(startDate);
+
+        // Xử lý theo type
+        switch (type) {
+            case 'month':
+                endDate.setMonth(startDate.getMonth() + 1);
+                break;
+            case 'year':
+                endDate.setFullYear(startDate.getFullYear() + 1);
+                break;
+            case 'Unlimited':
+                endDate.setFullYear(startDate.getFullYear() + 100);
+                break;
+            default:
+                throw new Error(
+                    'Loại gói không hợp lệ. Chọn "month", "year" hoặc "Unlimited"'
+                );
+        }
+
+        return endDate;
+    },
     getListPermission: async type => {
         const permissions = await Permission.findAll({
             attributes: ['id', 'name'],

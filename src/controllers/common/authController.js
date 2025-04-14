@@ -59,6 +59,10 @@ const authController = {
                     roles: [
                         {
                             roleId: data.user.roleId,
+                            planId: data.user.planId,
+                            planName: data.user.planName,
+                            planExpire: data.user.planExpire,
+                            planDuration: data.user.planDuration,
                             roleName: data.user.roleName,
                             soLuongQuyen: soLuongQuyenHandled,
                             permissions: listPermissionHandled

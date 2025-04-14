@@ -7,6 +7,7 @@ const sequelize = require('../../config/database');
 const AppError = require('../../utils/appError');
 const Role = require('./roles');
 const Unit = require('./unit');
+const Plan = require('./plan');
 
 const User = sequelize.define(
     'User',
@@ -153,6 +154,9 @@ const User = sequelize.define(
         }
     }
 );
+
+User.belongsTo(Plan, { foreignKey: 'plan_id' });
+Plan.hasMany(User, { foreignKey: 'plan_id' });
 
 //khóa ngoại trong bản project là createdBy
 User.hasMany(Token, { foreignKey: 'userId' }); //khi báo 1 user có nhiều token , quan hệ 1 nhiều
