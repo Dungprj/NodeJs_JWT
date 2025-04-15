@@ -383,7 +383,12 @@ const invoiceSaleService = {
             }
 
             await transaction.commit();
-            return newInvoiceSale;
+
+            const hoaDonChiTiet = await invoiceSaleService.getInvoiceSaleById(
+                idQuery,
+                newInvoiceSale.id
+            );
+            return hoaDonChiTiet;
         } catch (error) {
             // Rollback transaction nếu có lỗi
             await transaction.rollback();

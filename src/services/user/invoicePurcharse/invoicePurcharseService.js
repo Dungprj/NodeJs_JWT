@@ -368,7 +368,13 @@ const invoicePurchaseService = {
             }
 
             await transaction.commit();
-            return newInvoicePurchase;
+
+            const hoaDonChiTiet =
+                await invoicePurchaseService.getInvoicePurchaseById(
+                    idQuery,
+                    newInvoicePurchase.id
+                );
+            return hoaDonChiTiet;
         } catch (error) {
             // Rollback transaction nếu có lỗi
             await transaction.rollback();
