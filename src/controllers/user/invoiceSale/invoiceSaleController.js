@@ -50,9 +50,11 @@ const invoiceSaleController = {
     // Tạo hóa đơn bán hàng mới (POST /api/invoice-sales)
     createInvoiceSale: catchAsync(async (req, res) => {
         const idQuery = req.idQuery;
+        const idUserCurrent = req.user.id;
         const newInvoiceSale = await invoiceSaleService.createInvoiceSale(
             req.body,
-            idQuery
+            idQuery,
+            idUserCurrent
         );
         return ApiResponse.success(
             res,
@@ -81,7 +83,12 @@ const invoiceSaleController = {
     // Xóa hóa đơn bán hàng (DELETE /api/invoice-sales/:id)
     deleteInvoiceSale: catchAsync(async (req, res) => {
         const idQuery = req.idQuery;
-        await invoiceSaleService.deleteInvoiceSale(req.params.id, idQuery);
+        const idUserCurrent = req.user.id;
+        await invoiceSaleService.deleteInvoiceSale(
+            req.params.id,
+            idQuery,
+            idUserCurrent
+        );
         return ApiResponse.success(
             res,
             null,

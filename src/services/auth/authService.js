@@ -213,6 +213,8 @@ const authService = {
                 }
             });
 
+            // const planCurrent = await Plan.findByPk(isExistUser.plan_id);
+
             return {
                 message: 'Login successful',
                 accessToken: accessToken,
@@ -226,7 +228,7 @@ const authService = {
                     roleId: roleId[0].id,
                     planId: isExistUser.plan_id,
                     planName: isExistUser.Plan.dataValues.name,
-                    planDuration: planDuration,
+                    planDuration: isExistUser.plan_expire_date,
                     planExpire: isExistUser.plan_expire_date,
                     roleName: isExistUser.type
                 },

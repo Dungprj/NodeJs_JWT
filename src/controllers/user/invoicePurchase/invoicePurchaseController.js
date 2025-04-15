@@ -50,10 +50,13 @@ const invoicePurchaseController = {
     // Tạo hóa đơn nhập hàng mới (POST /api/invoice-purchases)
     createInvoicePurchase: catchAsync(async (req, res) => {
         const idQuery = req.idQuery;
+        const idUserCurrent = req.user.id;
+
         const newInvoicePurchase =
             await invoicePurchaseService.createInvoicePurchase(
                 req.body,
-                idQuery
+                idQuery,
+                idUserCurrent
             );
         return ApiResponse.success(
             res,

@@ -16,8 +16,19 @@ const commom = require('../../../common/common');
 const invoicePurchaseService = {
     // Lấy tất cả hóa đơn nhập hàng của user (200 OK | 404 Not Found)
     getAllInvoicePurchases: async idQuery => {
+        // Lấy danh sách id nhân viên
+        const danhSachNhanVien = await User.findAll({
+            where: {
+                parent_id: idQuery
+            }
+        });
+
         const invoicePurchases = await InvoicePurchase.findAll({
-            where: { created_by: idQuery },
+            where: {
+                created_by: {
+                    [Op.in]: [idQuery, ...danhSachNhanVien.map(nv => nv.id)]
+                }
+            },
             include: [
                 {
                     model: InvoicePurchaseDetail,
@@ -59,6 +70,12 @@ const invoicePurchaseService = {
 
     // Lấy hóa đơn nhập hàng theo ID (200 OK | 404 Not Found)
     getInvoicePurchaseById: async (idQuery, id) => {
+        // Lấy danh sách id nhân viên
+        const danhSachNhanVien = await User.findAll({
+            where: {
+                parent_id: idQuery
+            }
+        });
         const invoicePurchase = await InvoicePurchase.findAll({
             include: [
                 {
@@ -91,7 +108,12 @@ const invoicePurchaseService = {
                     attributes: ['id', 'name']
                 }
             ],
-            where: { created_by: idQuery, id: id }
+            where: {
+                created_by: {
+                    [Op.in]: [idQuery, ...danhSachNhanVien.map(nv => nv.id)]
+                },
+                id: id
+            }
         });
         if (!invoicePurchase) {
             throw new AppError('Không tìm thấy hóa đơn nhập hàng', 404);
@@ -100,6 +122,11 @@ const invoicePurchaseService = {
     },
 
     generateQRCode: async (idQuery, id) => {
+        const danhSachNhanVien = await User.findAll({
+            where: {
+                parent_id: idQuery
+            }
+        });
         const invoicePurchase = await InvoicePurchase.findAll({
             include: [
                 {
@@ -133,7 +160,12 @@ const invoicePurchaseService = {
                 }
             ],
             raw: true,
-            where: { created_by: idQuery, id: id }
+            where: {
+                created_by: {
+                    [Op.in]: [idQuery, ...danhSachNhanVien.map(nv => nv.id)]
+                },
+                id: id
+            }
         });
         if (!invoicePurchase) {
             throw new AppError('Không tìm thấy hóa đơn nhập hàng', 404);
@@ -196,7 +228,7 @@ const invoicePurchaseService = {
     },
 
     // Tạo hóa đơn nhập hàng mới (201 Created | 400 Bad Request)
-    createInvoicePurchase: async (data, idQuery) => {
+    createInvoicePurchase: async (data, idQuery, idUserCurrent) => {
         if (data.branchId == undefined) {
             throw new AppError('Chi nhánh là bắt buộc', 400);
         }
@@ -221,6 +253,12 @@ const invoicePurchaseService = {
             throw new AppError('Danh sách sản phẩm không được để trống', 400);
         }
 
+        const danhSachNhanVien = await User.findAll({
+            where: {
+                parent_id: idQuery
+            }
+        });
+
         const transaction = await InvoicePurchase.sequelize.transaction();
         try {
             const itemsMap = new Map();
@@ -234,8 +272,6 @@ const invoicePurchaseService = {
                 where: { id: { [Op.in]: productIds } },
                 transaction
             });
-
-            console.log('du lieu : ', products);
 
             for (const product of data.products) {
                 const productInfo = products.find(
@@ -270,7 +306,11 @@ const invoicePurchaseService = {
             }
 
             const lastInvoice = await InvoicePurchase.findOne({
-                where: { created_by: idQuery },
+                where: {
+                    created_by: {
+                        [Op.in]: [idQuery, ...danhSachNhanVien.map(nv => nv.id)]
+                    }
+                },
                 order: [['id', 'DESC']],
                 transaction
             });
@@ -287,7 +327,8 @@ const invoicePurchaseService = {
                     cash_register_id: data.cashRegisterId || 0,
                     status: data.status ?? 2,
                     paied: data.paied || 0,
-                    created_by: idQuery
+                    // created_by: idQuery
+                    created_by: idUserCurrent
                 },
                 { transaction }
             );
@@ -343,8 +384,18 @@ const invoicePurchaseService = {
 
     // Cập nhật hóa đơn nhập hàng (200 OK | 404 Not Found | 400 Bad Request)
     updateInvoicePurchase: async (id, data, idQuery) => {
+        const danhSachNhanVien = await User.findAll({
+            where: {
+                parent_id: idQuery
+            }
+        });
         const invoicePurchase = await InvoicePurchase.findOne({
-            where: { id: id, created_by: idQuery }
+            where: {
+                id: id,
+                created_by: {
+                    [Op.in]: [idQuery, ...danhSachNhanVien.map(nv => nv.id)]
+                }
+            }
         });
         if (!invoicePurchase) {
             throw new AppError(
@@ -495,7 +546,19 @@ const invoicePurchaseService = {
 
     // Xóa hóa đơn nhập hàng (204 No Content | 404 Not Found)
     deleteInvoicePurchase: async (id, idQuery) => {
-        const invoicePurchase = await InvoicePurchase.findByPk(id);
+        const danhSachNhanVien = await User.findAll({
+            where: {
+                parent_id: idQuery
+            }
+        });
+        const invoicePurchase = await InvoicePurchase.findOne({
+            where: {
+                id: id,
+                created_by: {
+                    [Op.in]: [idQuery, ...danhSachNhanVien.map(nv => nv.id)]
+                }
+            }
+        });
         if (!invoicePurchase) {
             throw new AppError('Không tìm thấy hóa đơn nhập hàng để xóa', 404);
         }
