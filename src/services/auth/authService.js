@@ -34,7 +34,7 @@ const authService = {
         email,
         password,
         confirmPassword,
-        address = 'ha noi',
+        address = '',
         email_verified_at = null,
         avatar = null,
         parent_id = 1,

@@ -134,6 +134,16 @@ const userService = {
         }
     },
     addUser: async (idQuery, data) => {
+        const useCurrent = await User.findByPk(idQuery);
+
+        if (!useCurrent) {
+            throw new AppError('User not found', 404);
+        }
+
+        if (!useCurrent) {
+            throw new AppError('User not found', 404);
+        }
+
         const transaction = await User.sequelize.transaction();
         try {
             const {
@@ -141,7 +151,7 @@ const userService = {
                 email,
                 password,
                 confirmPassword,
-                address = 'ha noi',
+                address = '',
                 email_verified_at = null,
                 avatar = null,
                 parent_id = idQuery,
@@ -150,7 +160,7 @@ const userService = {
                 cash_register_id,
                 lang = 'vi',
                 mode = 'light',
-                plan_id = 1,
+                plan_id = useCurrent.plan_id || 1,
                 plan_expire_date = null,
                 plan_requests = 0,
                 is_active = 0,
