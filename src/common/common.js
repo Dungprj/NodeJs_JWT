@@ -4,6 +4,8 @@ const RolePermission = require('../db/models/rolepermissions');
 const Role = require('../db/models/roles');
 const Permission = require('../db/models/permissions');
 const { Op } = require('sequelize');
+const moment = require('moment-timezone'); // Thêm thư viện moment-timezone
+
 const commom = {
     formatCurrency: amount => {
         // Chuyển đổi amount thành số nếu nó là chuỗi
@@ -110,6 +112,39 @@ const commom = {
         const value = parseInt(match[1], 10);
         const unit = match[2];
         return value * units[unit];
+    },
+
+    fomatTime: item => {
+        if (Array.isArray(item) && item.length > 1) {
+            return item.map(singleItem => ({
+                ...singleItem.toJSON(),
+                created_at: moment(singleItem.created_at)
+                    .tz('Asia/Ho_Chi_Minh')
+                    .format(),
+                updated_at: moment(singleItem.updated_at)
+                    .tz('Asia/Ho_Chi_Minh')
+                    .format()
+            }));
+        }
+        if (Array.isArray(item) && item.length == 1) {
+            const formatted = item.map(singleItem => ({
+                ...singleItem.toJSON(),
+                created_at: moment(singleItem.created_at)
+                    .tz('Asia/Ho_Chi_Minh')
+                    .format(),
+                updated_at: moment(singleItem.updated_at)
+                    .tz('Asia/Ho_Chi_Minh')
+                    .format()
+            }));
+
+            return formatted;
+        }
+
+        return {
+            ...item.toJSON(),
+            created_at: moment(item.created_at).tz('Asia/Ho_Chi_Minh').format(),
+            updated_at: moment(item.updated_at).tz('Asia/Ho_Chi_Minh').format()
+        };
     },
     LogoutTaiKhoanNhanVien: async idParent => {
         try {

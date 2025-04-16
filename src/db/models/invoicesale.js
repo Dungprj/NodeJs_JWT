@@ -8,6 +8,7 @@ const Customer = require('./customer');
 const Branch = require('./branch');
 const CashRegister = require('./cashregister');
 
+const common = require('../../common/common');
 const InvoiceSale = sequelize.define(
     'InvoiceSale',
     {

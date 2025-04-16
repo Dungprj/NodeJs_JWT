@@ -65,7 +65,7 @@ const invoicePurchaseService = {
                 404
             );
         }
-        return invoicePurchases;
+        return commom.fomatTime(invoicePurchases);
     },
 
     // Lấy hóa đơn nhập hàng theo ID (200 OK | 404 Not Found)
@@ -118,7 +118,7 @@ const invoicePurchaseService = {
         if (!invoicePurchase) {
             throw new AppError('Không tìm thấy hóa đơn nhập hàng', 404);
         }
-        return invoicePurchase;
+        return commom.fomatTime(invoicePurchase);
     },
 
     generateQRCode: async (idQuery, id) => {
@@ -536,7 +536,7 @@ const invoicePurchaseService = {
 
             await invoicePurchase.save({ transaction });
             await transaction.commit();
-            return invoicePurchase;
+            return commom.fomatTime(invoicePurchase);
         } catch (error) {
             // Rollback transaction nếu có lỗi
             await transaction.rollback();

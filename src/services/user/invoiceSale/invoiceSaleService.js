@@ -70,7 +70,7 @@ const invoiceSaleService = {
                 404
             );
         }
-        return invoiceSales;
+        return commom.fomatTime(invoiceSales);
     },
 
     generateQRCode: async (idQuery, id) => {
@@ -231,7 +231,8 @@ const invoiceSaleService = {
         if (!invoiceSale) {
             throw new AppError('Không tìm thấy hóa đơn bán hàng', 404);
         }
-        return invoiceSale;
+
+        return commom.fomatTime(invoiceSale);
     },
 
     // Tạo hóa đơn bán hàng mới (201 Created | 400 Bad Request)
@@ -564,7 +565,7 @@ const invoiceSaleService = {
             await invoiceSale.save({ transaction });
             await transaction.commit();
 
-            return invoiceSale;
+            return commom.fomatTime(invoiceSale);
         } catch (error) {
             // Rollback transaction nếu có lỗi
             await transaction.rollback();
