@@ -12,12 +12,6 @@ const productController = {
         const idQuery = req.idQuery;
         const products = await productService.getAllProducts(idQuery);
 
-        if (!products.length) {
-            return next(
-                new AppError('Không có sản phẩm nào trong hệ thống', 404)
-            );
-        }
-
         return ApiResponse.success(
             res,
             products,

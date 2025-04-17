@@ -10,7 +10,7 @@ const productReturnService = {
             where: { created_by: idQuery }
         });
 
-        if (!productReturns || productReturns.length === 0) {
+        if (!productReturns) {
             throw new AppError('Danh sách phiếu trả hàng không tồn tại', 404);
         }
 

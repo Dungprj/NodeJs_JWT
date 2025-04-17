@@ -10,7 +10,7 @@ const brandService = {
             where: { created_by: idQuẻy }
         });
 
-        if (!brands || brands.length == 0) {
+        if (!brands) {
             throw new AppError('Danh sách thương hiệu không tồn tại', 404);
         }
         return brands;

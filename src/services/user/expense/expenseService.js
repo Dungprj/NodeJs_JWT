@@ -11,7 +11,7 @@ const ExpenseService = {
             where: { created_by: idQuery }
         });
 
-        if (!expenses || expenses.length === 0) {
+        if (!expenses) {
             throw new AppError('Danh sách chi tiêu không tồn tại', 404);
         }
 

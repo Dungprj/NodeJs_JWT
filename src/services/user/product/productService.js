@@ -14,7 +14,7 @@ const {
 const productService = {
     // Lấy tất cả sản phẩm
     getAllProducts: async idQuery => {
-        return await Product.findAll({
+        const products = await Product.findAll({
             include: [
                 // { model: Tax, as: 'tax' },
                 // { model: Unit, as: 'unit' },
@@ -28,6 +28,11 @@ const productService = {
                 created_by: idQuery
             }
         });
+
+        if (!products) {
+            throw new AppError('Không tìm thấy danh sách sản phẩm', 404);
+        }
+        return products;
     },
 
     // Lấy thông tin chi tiết sản phẩm theo ID

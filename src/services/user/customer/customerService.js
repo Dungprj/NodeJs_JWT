@@ -10,7 +10,7 @@ const customerService = {
             where: { created_by: idQuery }
         });
 
-        if (!customers || customers.length === 0) {
+        if (!customers) {
             throw new AppError('Danh sách khách hàng không tồn tại', 404);
         }
 

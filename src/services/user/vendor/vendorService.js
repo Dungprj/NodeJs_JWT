@@ -10,7 +10,7 @@ const vendorService = {
             where: { created_by: idQuery }
         });
 
-        if (!vendors || vendors.length === 0) {
+        if (!vendors) {
             throw new AppError('Danh sách nhà cung cấp không tìm thấy', 404);
         }
 

@@ -118,7 +118,7 @@ const roleService = {
             raw: false
         });
 
-        if (roles.length === 0) {
+        if (!roles) {
             throw new AppError('List role not found', 404);
         }
 

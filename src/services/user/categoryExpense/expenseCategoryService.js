@@ -11,7 +11,7 @@ const ExpenseCategoryService = {
             where: { created_by: idQuery }
         });
 
-        if (!ExpenseCategories || ExpenseCategories.length === 0) {
+        if (!ExpenseCategories) {
             throw new AppError(
                 'Danh sách danh mục chi tiêu không tồn tại',
                 404

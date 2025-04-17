@@ -45,7 +45,7 @@ const branchService = {
             where: { created_by: id }
         });
 
-        if (!branches || branches.length === 0) {
+        if (!branches) {
             throw new AppError('Danh sách chi nhánh không tồn tại', 404);
         }
 

@@ -11,7 +11,7 @@ const categoryService = {
             where: { created_by: idQuery }
         });
 
-        if (!categories || categories.length === 0) {
+        if (!categories) {
             throw new AppError('Danh sách danh mục không tồn tại', 404);
         }
 
