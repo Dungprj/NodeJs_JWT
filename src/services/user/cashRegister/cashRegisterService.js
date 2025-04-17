@@ -28,7 +28,7 @@ const cashRegisterService = {
             where: { created_by: idQuery }
         });
 
-        if (!cashRegisters || cashRegisters.length === 0) {
+        if (!cashRegisters ) {
             throw new AppError('Danh sách quầy thu ngân không tồn tại', 404);
         }
 

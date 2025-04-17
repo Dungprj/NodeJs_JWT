@@ -64,7 +64,7 @@ const invoiceSaleService = {
             ]
         });
 
-        if (!invoiceSales || invoiceSales.length === 0) {
+        if (!invoiceSales) {
             throw new AppError(
                 'Danh sách hóa đơn bán hàng không tìm thấy',
                 404
