@@ -7,7 +7,7 @@ const planService = {
     getAllPlans: async user => {
         const plans = await Plan.findAll();
 
-        if (!plans || plans.length === 0) {
+        if (!plans) {
             throw new AppError('Danh sách plan không tồn tại', 404);
         }
 

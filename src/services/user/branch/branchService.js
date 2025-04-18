@@ -125,16 +125,17 @@ const branchService = {
                 throw new AppError('Không tìm thấy chi nhánh để cập nhật', 404);
             }
 
-            const existingBranchName = await Branch.findOne({
-                where: {
-                    name: data.name,
-                    id: { [Op.ne]: id },
-                    created_by: idQuery
+            if (data.name) {
+                const existingBranchName = await Branch.findOne({
+                    where: {
+                        name: data.name,
+                        id: { [Op.ne]: id },
+                        created_by: idQuery
+                    }
+                });
+                if (existingBranchName) {
+                    throw new AppError('Tên chi nhánh đã tồn tại', 409);
                 }
-            });
-
-            if (existingBranchName) {
-                throw new AppError('Tên chi nhánh đã tồn tại', 409);
             }
 
             if (

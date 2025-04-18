@@ -28,7 +28,7 @@ const cashRegisterService = {
             where: { created_by: idQuery }
         });
 
-        if (!cashRegisters ) {
+        if (!cashRegisters) {
             throw new AppError('Danh sách quầy thu ngân không tồn tại', 404);
         }
 
@@ -111,16 +111,17 @@ const cashRegisterService = {
                 );
             }
 
-            const existingcashRegister = await CashRegister.findOne({
-                where: {
-                    name: data.name,
-                    id: { [Op.ne]: id },
-                    created_by: idQuery
+            if (data.name) {
+                const existingcashRegister = await CashRegister.findOne({
+                    where: {
+                        name: data.name,
+                        id: { [Op.ne]: id },
+                        created_by: idQuery
+                    }
+                });
+                if (existingcashRegister) {
+                    throw new AppError('thương hiệu đã tồn tại', 409);
                 }
-            });
-
-            if (existingcashRegister) {
-                throw new AppError('thương hiệu đã tồn tại', 409);
             }
 
             if (data.name) cashRegister.name = data.name;
