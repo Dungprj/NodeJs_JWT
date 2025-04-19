@@ -23,9 +23,11 @@ const productReturnRoutes = require('./productReturnRoute/productReturnRoute');
 
 const invoicePurcharseRoutes = require('./invoicePurchaseRoute/invoicePurchaseRoute');
 const invoiceSaleRoutes = require('./invoiceSaleRoute/invoiceSaleRoute');
+const checkPlanExpire = require('../../middleware/checkPlanExpire');
 
 const routerUser = express.Router();
 
+routerUser.use(checkPlanExpire);
 // Gộp các route con vào router chính
 routerUser.use('/tax', taxRoutes);
 routerUser.use('/unit', unitRoutes);

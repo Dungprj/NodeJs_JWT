@@ -18,6 +18,7 @@ const { json } = require('express');
 const commom = require('../../common/common');
 
 const checkPlanLimits = require('../../middleware/checkPlanLimits');
+const paymenttransactionService = require('../../services/user/PaymentTransaction/paymentTransaction');
 const Plan = require('../../db/models/plan');
 
 require('dotenv').config();
