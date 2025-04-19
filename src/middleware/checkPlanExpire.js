@@ -12,11 +12,20 @@ const checkPlanExpire = async (req, res, next) => {
         idQuery
     );
 
-    const planCurrent = await Plan.findByPk(getLastPayment.plan_id);
+    console.log('goi dang ky cuoi cung thanh cong la : ', getLastPayment);
+
+    let planCurrent = 1;
+
+    if (getLastPayment) {
+        planCurrent = getLastPayment.plan_id;
+        console.log('dung goi vip : ', getLastPayment.plan_id);
+    }
+
+    const planType = await Plan.findByPk(getLastPayment.plan_id);
 
     const calcPlanExpire = commom.calculateEndTime(
         getLastPayment.created_at,
-        planCurrent.duration
+        planType.duration
     );
 
     if (calcPlanExpire < new Date()) {
