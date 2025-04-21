@@ -65,6 +65,9 @@ const planService = {
             planCurrent.duration
         );
 
+        console.log('ngay het han ', calcPlanExpire);
+        console.log('goi hien tai la : ', planCurrent);
+
         return {
             expirePlan: calcPlanExpire,
             planCurrent
