@@ -16,12 +16,36 @@ const checkPlanExpire = async (req, res, next) => {
 
     let planCurrent = 1;
 
-    if (getLastPayment) {
-        planCurrent = getLastPayment.plan_id;
-        console.log('dung goi vip : ', getLastPayment.plan_id);
+    //planType mac dinh la 1
+
+    const planType = await Plan.findByPk(1);
+
+    if (getLastPayment == null) {
+        console.log('Khong tim thấy thông tin thanh toán gần nhất');
+        console.log('đang dùng gói free');
+
+        const userCurent = await User.findByPk(idQuery);
+
+        const calcPlanExpire = commom.calculateEndTime(
+            userCurent.created_at,
+            planType.duration
+        );
+
+        if (calcPlanExpire < new Date()) {
+            return next(
+                new AppError(
+                    'Hết hạn plan vui lòng đăng ký gói mới để tiếp tục',
+                    400
+                )
+            );
+        }
+        next();
     }
 
-    const planType = await Plan.findByPk(getLastPayment.plan_id);
+    planCurrent = getLastPayment.plan_id;
+    console.log('dung goi vip : ', getLastPayment.plan_id);
+
+    planType = await Plan.findByPk(getLastPayment.plan_id);
 
     const calcPlanExpire = commom.calculateEndTime(
         getLastPayment.created_at,

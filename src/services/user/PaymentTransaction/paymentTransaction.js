@@ -13,7 +13,7 @@ const paymenttransactionService = {
             order: [['created_at', 'DESC']]
         });
         if (!payMentTransaction) {
-            throw new AppError('Không tìm thấy yêu cầu gói nào', 404);
+            return null;
         }
 
         console.log(
