@@ -65,7 +65,10 @@ const planService = {
             planCurrent.duration
         );
 
-        return calcPlanExpire;
+        return {
+            expirePlan: calcPlanExpire,
+            planCurrent
+        };
     }
 };
 
