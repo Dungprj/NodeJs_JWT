@@ -1,4 +1,6 @@
 const User = require('../db/models/user');
+const Plan = require('../db/models/plan');
+
 const Token = require('../db/models/token');
 const RolePermission = require('../db/models/rolepermissions');
 const Role = require('../db/models/roles');
@@ -146,6 +148,7 @@ const commom = {
             updated_at: moment(item.updated_at).tz('Asia/Ho_Chi_Minh').format()
         };
     },
+
     LogoutTaiKhoanNhanVien: async idParent => {
         try {
             // Lấy danh sách id nhân viên

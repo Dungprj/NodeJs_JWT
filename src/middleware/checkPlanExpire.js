@@ -18,7 +18,7 @@ const checkPlanExpire = async (req, res, next) => {
 
     //planType mac dinh la 1
 
-    const planType = await Plan.findByPk(1);
+    let planType = await Plan.findByPk(1);
 
     if (getLastPayment == null) {
         console.log('Khong tim thấy thông tin thanh toán gần nhất');

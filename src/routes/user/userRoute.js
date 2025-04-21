@@ -27,7 +27,6 @@ const checkPlanExpire = require('../../middleware/checkPlanExpire');
 
 const routerUser = express.Router();
 
-routerUser.use(checkPlanExpire);
 // Gộp các route con vào router chính
 routerUser.use('/tax', taxRoutes);
 routerUser.use('/unit', unitRoutes);
@@ -46,8 +45,7 @@ routerUser.use('/customer', customerRoutes);
 routerUser.use('/productReturn', productReturnRoutes);
 routerUser.use('/profile', userProfileRoutes);
 routerUser.use('/categoryExpense', categroyExpenseRoutes);
-routerUser.use('/plan', planRoutes);
-
 routerUser.use('/expense', expenseRoutes);
+routerUser.use('/plan', planRoutes);
 
 module.exports = routerUser;

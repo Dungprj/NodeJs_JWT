@@ -1,6 +1,6 @@
 const catchAsync = require('../../../utils/catchAsync');
 const ApiResponse = require('../../../utils/apiResponse');
-const planService = require('../../../services/admin/plan/planService');
+const planService = require('../../../services/user/plan/planService');
 
 const planController = {
     getListPlan: catchAsync(async (req, res) => {
@@ -20,6 +20,18 @@ const planController = {
             res,
             plan,
             'Lấy thông tin plan thành công',
+            200
+        );
+    }),
+
+    getDateExpire: catchAsync(async (req, res) => {
+        const idQuery = req.idQuery;
+
+        const plansDateExpire = await planService.getDateExpire(idQuery);
+        return ApiResponse.success(
+            res,
+            plansDateExpire,
+            'Lấy ngày hết hạn plan thành công',
             200
         );
     })
