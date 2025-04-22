@@ -21,6 +21,8 @@ const checkPlanLimits = require('../../middleware/checkPlanLimits');
 const paymenttransactionService = require('../../services/user/PaymentTransaction/paymentTransaction');
 const Plan = require('../../db/models/plan');
 
+const planService = require('../../services/user/plan/planService');
+
 require('dotenv').config();
 
 // Hàm tính thời gian hết hạn (expiresAt) dựa trên giá trị từ .env
@@ -143,6 +145,26 @@ const authService = {
                 checkPlanLimits.syncSubUserCount(isExistUser.parent_id);
                 checkPlanLimits.syncCustomerCount(isExistUser.parent_id);
                 checkPlanLimits.syncVendorCount(isExistUser.parent_id);
+
+                //lay goi moi nhat cho nhan vien
+
+                const planCurrentByParentId = await planService.getDateExpire(
+                    isExistUser.parent_id
+                );
+
+                if (
+                    planCurrentByParentId.planCurrent.id != isExistUser.plan_id
+                ) {
+                    await User.update(
+                        {
+                            plan_id: planCurrentByParentId.planCurrent.id,
+                            plan_expire_date: planCurrentByParentId.expirePlan
+                        },
+                        {
+                            where: { id: isExistUser.id }
+                        }
+                    );
+                }
             } else {
                 checkPlanLimits.syncSubUserCount(isExistUser.id);
                 checkPlanLimits.syncCustomerCount(isExistUser.id);

@@ -11,6 +11,8 @@ const Permission = require('../db/models/permissions');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
+const planService = require('../services/user/plan/planService');
+
 const versionRoute = '/v1';
 const whiteListPaths = [
     '/',
@@ -96,6 +98,27 @@ const middleware = {
                 }
             }
         );
+
+        //check plan parent thay doi
+        const planCurrentByParentId = await planService.getDateExpire(
+            req.idQuery
+        );
+
+        const isExistUser = await User.findOne({
+            where: { id: req.user.id }
+        });
+
+        if (planCurrentByParentId.planCurrent.id != isExistUser.plan_id) {
+            await User.update(
+                {
+                    plan_id: planCurrentByParentId.planCurrent.id,
+                    plan_expire_date: planCurrentByParentId.expirePlan
+                },
+                {
+                    where: { id: isExistUser.id }
+                }
+            );
+        }
 
         return next();
     })

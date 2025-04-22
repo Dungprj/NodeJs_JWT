@@ -7,6 +7,7 @@ const CastRegister = require('../../../db/models/cashregister');
 const redisClient = require('../../../config/redis'); // Import từ file cấu hình
 const AppError = require('../../../utils/appError');
 const { Op } = require('sequelize');
+const planService = require('../plan/planService');
 const userService = {
     getListUser: async idQuery => {
         const users = await User.findAll({
@@ -136,6 +137,10 @@ const userService = {
     addUser: async (idQuery, data) => {
         const useCurrent = await User.findByPk(idQuery);
 
+        const getplanCurrentByIdQuery = await planService.getDateExpire(
+            idQuery
+        );
+
         if (!useCurrent) {
             throw new AppError('User not found', 404);
         }
@@ -160,8 +165,8 @@ const userService = {
                 cash_register_id,
                 lang = 'vi',
                 mode = 'light',
-                plan_id = useCurrent.plan_id || 1,
-                plan_expire_date = null,
+                plan_id = getplanCurrentByIdQuery.planCurrent.id,
+                plan_expire_date = getplanCurrentByIdQuery.expirePlan,
                 plan_requests = 0,
                 is_active = 0,
                 user_status = 0,
